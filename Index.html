@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每周工作复盘系统</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0eeea;
+  --border: rgba(30,30,30,0.1);
+  --border2: rgba(30,30,30,0.18);
+  --text: #1a1a1a;
+  --text2: #5a5a5a;
+  --text3: #999;
+  --accent: #1F4E79;
+  --accent2: #2E75B6;
+  --accent-light: #e8f0f8;
+  --accent-mid: #b8d0ea;
+  --green: #2d6a4f;
+  --green-bg: #e8f5ee;
+  --amber: #92400e;
+  --amber-bg: #fef3c7;
+  --red: #9b1c1c;
+  --red-bg: #fee2e2;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  --shadow2: 0 8px 32px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ======== LAYOUT ======== */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 240px;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: var(--transition);
+}
+
+.sidebar-logo {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.sidebar-logo h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  line-height: 1.3;
+  color: #fff;
+}
+.sidebar-logo p {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 4px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.sidebar-nav { flex: 1; padding: 16px 0; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.65);
+  font-size: 13.5px;
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-item.active {
+  color: #fff;
+  background: rgba(255,255,255,0.12);
+  border-left-color: rgba(255,255,255,0.7);
+}
+.nav-icon { width: 18px; height: 18px; opacity: 0.9; }
+
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+
+.main {
+  margin-left: 240px;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title { font-size: 17px; font-weight: 500; }
+.topbar-actions { display: flex; gap: 10px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text);
+  transition: var(--transition);
+  font-weight: 500;
+}
+.btn:hover { background: var(--surface2); }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #163d61; border-color: #163d61; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+.content { padding: 28px 32px; flex: 1; }
+
+/* ======== VIEWS ======== */
+.view { display: none; animation: fadeIn 0.25s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ======== LIST VIEW ======== */
+.list-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+.search-box input {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  transition: var(--transition);
+}
+.search-box input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(46,117,182,0.12); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+.filter-select {
+  padding: 9px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--accent2); }
+
+.view-toggle { display: flex; gap: 2px; background: var(--surface2); border-radius: var(--radius-sm); padding: 3px; }
+.toggle-btn {
+  padding: 5px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text2);
+  transition: var(--transition);
+  font-size: 13px;
+}
+.toggle-btn.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+/* Card grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.review-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.review-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent2);
+  opacity: 0;
+  transition: var(--transition);
+}
+.review-card:hover { box-shadow: var(--shadow2); border-color: var(--accent-mid); transform: translateY(-2px); }
+.review-card:hover::before { opacity: 1; }
+
+.card-week { font-size: 11px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+.card-title { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+.card-date { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
+.card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.tag {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.tag-blue { background: var(--accent-light); color: var(--accent); }
+.tag-green { background: var(--green-bg); color: var(--green); }
+.tag-amber { background: var(--amber-bg); color: var(--amber); }
+
+.card-preview { font-size: 12.5px; color: var(--text2); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+
+/* Timeline */
+.timeline { position: relative; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--accent2), var(--accent-mid), transparent);
+}
+.timeline-item { display: flex; gap: 24px; margin-bottom: 20px; position: relative; }
+.timeline-dot {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--accent-mid);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  z-index: 1;
+  margin-top: 4px;
+}
+.timeline-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.timeline-card:hover { box-shadow: var(--shadow2); border-color: var(--accent-mid); }
+.tl-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+.tl-title { font-size: 14.5px; font-weight: 500; }
+.tl-meta { font-size: 11.5px; color: var(--text3); text-align: right; }
+.tl-body { font-size: 12.5px; color: var(--text2); line-height: 1.5; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+.empty-state h3 { font-size: 15px; color: var(--text2); margin-bottom: 8px; font-weight: 500; }
+.empty-state p { font-size: 13px; margin-bottom: 24px; }
+
+/* ======== DETAIL VIEW ======== */
+.detail-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}
+.detail-back { display: flex; align-items: center; gap: 6px; color: var(--accent2); cursor: pointer; font-size: 13px; margin-bottom: 16px; transition: var(--transition); }
+.detail-back:hover { color: var(--accent); }
+.detail-week-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+.detail-title { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+.detail-date { font-size: 13px; color: var(--text2); }
+.detail-meta { display: flex; gap: 24px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.detail-meta-item { font-size: 12px; color: var(--text2); }
+.detail-meta-item strong { display: block; font-size: 13px; color: var(--text); font-weight: 500; }
+
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--accent-light);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.section-header:hover { background: #dce9f5; }
+.section-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.section-title { font-size: 14px; font-weight: 500; color: var(--accent); flex: 1; }
+.section-toggle { color: var(--text3); transition: var(--transition); }
+.section-toggle.open { transform: rotate(180deg); }
+.section-body { padding: 0; transition: var(--transition); }
+.section-body.collapsed { display: none; }
+
+.detail-table { width: 100%; border-collapse: collapse; }
+.detail-table tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+.detail-table td { padding: 12px 20px; vertical-align: top; }
+.detail-table td:first-child {
+  width: 150px;
+  font-size: 12.5px;
+  color: var(--text2);
+  font-weight: 500;
+  background: var(--surface2);
+  white-space: nowrap;
+}
+.detail-table td:last-child { font-size: 13px; white-space: pre-wrap; line-height: 1.7; }
+
+.action-table { width: 100%; border-collapse: collapse; }
+.action-table th { padding: 10px 16px; background: var(--surface2); font-size: 12px; font-weight: 500; text-align: left; border-bottom: 1px solid var(--border); color: var(--text2); }
+.action-table td { padding: 10px 16px; font-size: 12.5px; border-bottom: 1px solid var(--border); }
+.action-table tr:last-child td { border-bottom: none; }
+.priority-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.priority-high { background: var(--red-bg); color: var(--red); }
+.priority-mid { background: var(--amber-bg); color: var(--amber); }
+.priority-low { background: var(--green-bg); color: var(--green); }
+
+/* ======== FORM VIEW ======== */
+.form-container { max-width: 900px; }
+.form-progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  overflow-x: auto;
+}
+.progress-step {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  transition: var(--transition);
+  cursor: pointer;
+  border: 2px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+}
+.step-dot.done { background: var(--green); border-color: var(--green); color: #fff; }
+.step-dot.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.step-label { font-size: 11.5px; color: var(--text3); margin-left: 6px; margin-right: 4px; white-space: nowrap; }
+.step-label.active { color: var(--accent); font-weight: 500; }
+.step-label.done { color: var(--green); }
+.step-line { width: 24px; height: 2px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+.step-line.done { background: var(--green); }
+
+.form-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+  display: none;
+}
+.form-section.active { display: block; animation: fadeIn 0.2s ease; }
+.form-section-header {
+  padding: 16px 24px;
+  background: var(--accent);
+  display: flex; align-items: center; gap: 10px;
+}
+.form-section-header h3 { color: #fff; font-size: 15px; font-weight: 500; }
+.form-section-header p { color: rgba(255,255,255,0.65); font-size: 12px; margin-top: 2px; }
+.form-body { padding: 24px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { margin-bottom: 16px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+.form-label .req { color: #e53e3e; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  transition: var(--transition);
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 3px rgba(46,117,182,0.1);
+}
+.form-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+.form-hint { font-size: 11.5px; color: var(--text3); margin-top: 4px; }
+
+.dim-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.dim-block-header {
+  padding: 10px 16px;
+  background: var(--accent-light);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dim-block-body { padding: 16px; }
+.dim-row { display: grid; grid-template-columns: 130px 1fr; gap: 0; margin-bottom: 0; }
+.dim-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+.dim-label {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  background: var(--surface2);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 12px;
+}
+.dim-input { padding: 8px; }
+.dim-input textarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: transparent;
+  outline: none;
+  min-height: 64px;
+  line-height: 1.6;
+}
+.dim-input textarea:focus { background: #fafbfc; }
+
+.action-row-form {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 100px 1fr 80px;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.action-cell {
+  padding: 8px 10px;
+  border-right: 1px solid var(--border);
+}
+.action-cell:last-child { border-right: none; }
+.action-cell input, .action-cell select {
+  width: 100%;
+  border: none;
+  font-size: 12.5px;
+  font-family: inherit;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+}
+.action-cell-header {
+  background: var(--surface2);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  padding: 6px 10px;
+}
+
+.form-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.form-step-indicator { font-size: 12.5px; color: var(--text3); }
+
+/* ======== STATS VIEW ======== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.stat-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.3px; }
+.stat-value { font-size: 28px; font-weight: 300; color: var(--accent); font-family: 'DM Serif Display', serif; }
+.stat-sub { font-size: 11.5px; color: var(--text3); margin-top: 4px; }
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.chart-title { font-size: 13.5px; font-weight: 500; margin-bottom: 16px; }
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 12px; color: var(--text2); width: 80px; flex-shrink: 0; text-align: right; }
+.bar-track { flex: 1; height: 20px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent2); border-radius: 4px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+.bar-val { font-size: 11px; color: #fff; font-weight: 500; }
+
+/* ======== MODAL / TOAST ======== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: var(--shadow2);
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 10px; }
+.modal p { font-size: 13.5px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--text);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  z-index: 300;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+  max-width: 320px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { width: 200px; }
+  .main { margin-left: 200px; }
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .chart-row { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .action-row-form { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h1>工作复盘</h1>
+      <p>Weekly Review System</p>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="showView('list')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+        复盘列表
+      </div>
+      <div class="nav-item" onclick="showView('new')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        新建复盘
+      </div>
+      <div class="nav-item" onclick="showView('stats')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        数据统计
+      </div>
+    </div>
+    <div class="sidebar-footer">数据存储于本地浏览器</div>
+  </nav>
+
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">复盘列表</span>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="showView('new')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          新建复盘
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- LIST VIEW -->
+      <div id="view-list" class="view active">
+        <div class="list-controls">
+          <div class="search-box">
+            <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" placeholder="搜索复盘内容..." id="search-input" oninput="filterList()">
+          </div>
+          <select class="filter-select" id="filter-year" onchange="filterList()">
+            <option value="">所有年份</option>
+          </select>
+          <select class="filter-select" id="filter-month" onchange="filterList()">
+            <option value="">所有月份</option>
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+          <div class="view-toggle">
+            <button class="toggle-btn active" id="card-toggle" onclick="setDisplayMode('card')" title="卡片视图">
+              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2"/></svg>
+            </button>
+            <button class="toggle-btn" id="timeline-toggle" onclick="setDisplayMode('timeline')" title="时间轴视图">
+              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="list-container"></div>
+      </div>
+
+      <!-- DETAIL VIEW -->
+      <div id="view-detail" class="view">
+        <div id="detail-content"></div>
+      </div>
+
+      <!-- NEW / EDIT FORM VIEW -->
+      <div id="view-new" class="view">
+        <div class="form-container">
+          <div class="form-progress" id="form-progress"></div>
+          <div id="form-sections"></div>
+          <div class="form-nav">
+            <span class="form-step-indicator" id="step-indicator">第 1 步，共 6 步</span>
+            <div style="display:flex;gap:10px">
+              <button class="btn" id="btn-prev" onclick="prevStep()" style="display:none">上一步</button>
+              <button class="btn btn-primary" id="btn-next" onclick="nextStep()">下一步</button>
+              <button class="btn btn-primary" id="btn-save" onclick="saveForm()" style="display:none">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                保存复盘
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS VIEW -->
+      <div id="view-stats" class="view">
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="chart-row" id="stats-charts"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3>确认删除</h3>
+    <p>删除后数据无法恢复，确定要删除这份复盘吗？</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn" style="background:#9b1c1c;color:#fff;border-color:#9b1c1c" onclick="confirmDelete()">删除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB_KEY = 'weekly_review_data';
+let currentView = 'list';
+let displayMode = 'card';
+let currentStep = 0;
+let editingId = null;
+let deleteTargetId = null;
+let formData = {};
+
+const STEPS = [
+  { id: 's0', title: '基础信息', short: '基础' },
+  { id: 's1', title: '代码工程能力', short: '工程' },
+  { id: 's2', title: '沟通能力', short: '沟通' },
+  { id: 's3', title: '工作管理', short: '管理' },
+  { id: 's4', title: '效率改进', short: '效率' },
+  { id: 's5', title: '行动汇总 & 总结', short: '总结' },
+];
+
+function getDB() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY)) || []; }
+  catch { return []; }
+}
+function saveDB(data) { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type;
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function showView(name, id = null) {
+  currentView = name;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navMap = { list: 0, detail: 0, new: 1, stats: 2 };
+  document.querySelectorAll('.nav-item')[navMap[name] || 0]?.classList.add('active');
+  const titles = { list: '复盘列表', detail: '复盘详情', new: editingId ? '编辑复盘' : '新建复盘', stats: '数据统计' };
+  document.getElementById('topbar-title').textContent = titles[name];
+  if (name === 'list') { document.getElementById('view-list').classList.add('active'); renderList(); }
+  else if (name === 'detail' && id) { document.getElementById('view-detail').classList.add('active'); renderDetail(id); }
+  else if (name === 'new') {
+    document.getElementById('view-new').classList.add('active');
+    if (id) { editingId = id; loadFormData(id); } else { editingId = null; formData = {}; }
+    currentStep = 0; buildForm(); renderProgress();
+  }
+  else if (name === 'stats') { document.getElementById('view-stats').classList.add('active'); renderStats(); }
+}
+
+// ======== RENDER LIST ========
+function renderList() {
+  populateYearFilter();
+  filterList();
+}
+
+function populateYearFilter() {
+  const db = getDB();
+  const years = [...new Set(db.map(r => r.year || new Date(r.createdAt).getFullYear()))].sort((a,b)=>b-a);
+  const sel = document.getElementById('filter-year');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">所有年份</option>' + years.map(y => `<option value="${y}" ${cur==y?'selected':''}>${y}年</option>`).join('');
+}
+
+function filterList() {
+  let db = getDB();
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const yr = document.getElementById('filter-year').value;
+  const mo = document.getElementById('filter-month').value;
+  if (q) db = db.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+  if (yr) db = db.filter(r => String(r.year || new Date(r.createdAt).getFullYear()) === yr);
+  if (mo) db = db.filter(r => String(r.startMonth) === mo || String(new Date(r.createdAt).getMonth()+1) === mo);
+  db = db.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const container = document.getElementById('list-container');
+  if (db.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>暂无复盘记录</h3><p>点击右上角「新建复盘」开始你的第一份周复盘</p><button class="btn btn-primary" onclick="showView('new')">新建复盘</button></div>`;
+    return;
+  }
+  if (displayMode === 'card') renderCards(db, container);
+  else renderTimeline(db, container);
+}
+
+function renderCards(db, container) {
+  container.innerHTML = `<div class="card-grid">${db.map(r => cardHTML(r)).join('')}</div>`;
+}
+
+function cardHTML(r) {
+  const preview = r.dim1_highlight || r.weekSummary || '（无内容摘要）';
+  return `<div class="review-card" onclick="showView('detail','${r.id}')">
+    <div class="card-week">第 ${r.weekNum || '—'} 周</div>
+    <div class="card-title">${r.title || `${r.startYear || ''}年${r.startMonth || ''}月复盘`}</div>
+    <div class="card-date">${formatDate(r.startDate)} — ${formatDate(r.endDate)}</div>
+    <div class="card-tags">
+      ${r.reviewer ? `<span class="tag tag-blue">${r.reviewer}</span>` : ''}
+      ${r.dim1_highlight ? '<span class="tag tag-green">技术亮点</span>' : ''}
+      ${r.actionItems && r.actionItems.length ? `<span class="tag tag-amber">${r.actionItems.length} 项行动</span>` : ''}
+    </div>
+    <div class="card-preview">${preview}</div>
+    <div class="card-actions" onclick="event.stopPropagation()">
+      <button class="btn btn-sm" onclick="showView('new','${r.id}')">编辑</button>
+      <button class="btn btn-sm" style="color:#9b1c1c;border-color:#f5a0a0" onclick="openDeleteModal('${r.id}')">删除</button>
+    </div>
+  </div>`;
+}
+
+function renderTimeline(db, container) {
+  const items = db.map(r => {
+    const mo = r.startMonth || (r.startDate ? new Date(r.startDate).getMonth()+1 : '?');
+    const wk = r.weekNum || '?';
+    return `<div class="timeline-item">
+      <div class="timeline-dot">${mo}/${wk}</div>
+      <div class="timeline-card" onclick="showView('detail','${r.id}')">
+        <div class="tl-header">
+          <div>
+            <div class="card-week" style="margin-bottom:3px">第 ${wk} 周</div>
+            <div class="tl-title">${r.title || `${r.startYear||''}年${mo}月复盘`}</div>
+          </div>
+          <div class="tl-meta">${formatDate(r.startDate)}<br>${r.reviewer||''}</div>
+        </div>
+        <div class="tl-body">${r.dim1_highlight || r.weekSummary || '（无摘要）'}</div>
+        <div class="card-actions" style="margin-top:10px" onclick="event.stopPropagation()">
+          <button class="btn btn-sm" onclick="showView('new','${r.id}')">编辑</button>
+          <button class="btn btn-sm" style="color:#9b1c1c;border-color:#f5a0a0" onclick="openDeleteModal('${r.id}')">删除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  container.innerHTML = `<div class="timeline">${items}</div>`;
+}
+
+function setDisplayMode(mode) {
+  displayMode = mode;
+  document.getElementById('card-toggle').classList.toggle('active', mode === 'card');
+  document.getElementById('timeline-toggle').classList.toggle('active', mode === 'timeline');
+  filterList();
+}
+
+// ======== DETAIL VIEW ========
+function renderDetail(id) {
+  const db = getDB();
+  const r = db.find(x => x.id === id);
+  if (!r) { showView('list'); return; }
+  const html = `
+    <div class="detail-header">
+      <div class="detail-back" onclick="showView('list')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        返回列表
+      </div>
+      <div class="detail-week-label">第 ${r.weekNum||'—'} 周</div>
+      <div class="detail-title">${r.title || `${r.startYear||''}年${r.startMonth||''}月工作复盘`}</div>
+      <div class="detail-date">${formatDate(r.startDate)} — ${formatDate(r.endDate)}</div>
+      <div class="detail-meta">
+        <div class="detail-meta-item"><strong>${r.reviewer||'—'}</strong>复盘人</div>
+        <div class="detail-meta-item"><strong>${r.reviewDate||'—'}</strong>完成时间</div>
+        <div class="detail-meta-item"><strong>${formatDate(r.createdAt)}</strong>创建时间</div>
+      </div>
+    </div>
+    ${sectionCard('一', '复盘基础信息', infoTable(r), 1)}
+    ${sectionCard('二', '维度1：代码工程能力', dimTable([
+      ['本周亮点/成果', r.dim1_highlight],
+      ['存在不足/技术问题', r.dim1_issue],
+      ['问题根源分析', r.dim1_root],
+      ['下周改进动作', r.dim1_action],
+    ]), 2)}
+    ${sectionCard('三', '维度2：沟通能力', dimTable([
+      ['高效沟通场景', r.dim2_highlight],
+      ['沟通不到位问题', r.dim2_issue],
+      ['根源分析', r.dim2_root],
+      ['下周改进动作', r.dim2_action],
+    ]), 3)}
+    ${sectionCard('四', '维度3：工作管理', dimTable([
+      ['优先级执行情况', r.dim3_priority],
+      ['项目风险/超预期', r.dim3_risk],
+      ['根源分析', r.dim3_root],
+      ['下周改进动作', r.dim3_action],
+    ]), 4)}
+    ${sectionCard('五', '维度4：效率改进', dimTable([
+      ['低效工作环节', r.dim4_issue],
+      ['效率提升方向', r.dim4_direction],
+      ['下周改进动作', r.dim4_action],
+    ]), 5)}
+    ${sectionCard('六', '行动改进汇总', actionTableHTML(r.actionItems || []), 6)}
+    ${sectionCard('七', '本周总结 & 下周计划', summaryHTML(r), 7)}
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-primary" onclick="showView('new','${r.id}')">编辑复盘</button>
+      <button class="btn" onclick="showView('list')">返回列表</button>
+    </div>
+  `;
+  document.getElementById('detail-content').innerHTML = html;
+}
+
+function sectionCard(num, title, body, idx) {
+  return `<div class="section-card">
+    <div class="section-header" onclick="toggleSection(${idx})">
+      <div class="section-num">${num}</div>
+      <div class="section-title">${title}</div>
+      <svg class="section-toggle open" id="toggle-${idx}" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="section-body" id="body-${idx}">${body}</div>
+  </div>`;
+}
+function toggleSection(idx) {
+  const body = document.getElementById(`body-${idx}`);
+  const icon = document.getElementById(`toggle-${idx}`);
+  body.classList.toggle('collapsed');
+  icon.classList.toggle('open');
+}
+function infoTable(r) {
+  return `<table class="detail-table">
+    <tr><td>复盘周期</td><td>${formatDate(r.startDate)} — ${formatDate(r.endDate)}（第${r.weekNum||'—'}周）</td></tr>
+    <tr><td>复盘人</td><td>${r.reviewer||'—'}</td></tr>
+    <tr><td>参与人员</td><td>${r.participants||'—'}</td></tr>
+    <tr><td>完成时间</td><td>${r.reviewDate||'—'}</td></tr>
+  </table>`;
+}
+function dimTable(rows) {
+  return `<table class="detail-table">${rows.map(([l,v])=>`<tr><td>${l}</td><td>${v||'（未填写）'}</td></tr>`).join('')}</table>`;
+}
+function actionTableHTML(items) {
+  if (!items.length) return `<div style="padding:20px;color:var(--text3);font-size:13px">（未填写行动计划）</div>`;
+  const ph = {高:'priority-high',中:'priority-mid',低:'priority-low'};
+  return `<table class="action-table">
+    <thead><tr><th>#</th><th>改进内容</th><th>优先级</th><th>完成时限</th><th>验收标准</th><th>备注</th></tr></thead>
+    <tbody>${items.map((it,i)=>`<tr>
+      <td>${i+1}</td><td>${it.content||'—'}</td>
+      <td><span class="priority-badge ${ph[it.priority]||'priority-low'}">${it.priority||'低'}</span></td>
+      <td>${it.deadline||'—'}</td><td>${it.criteria||'—'}</td><td>${it.note||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+function summaryHTML(r) {
+  return `<table class="detail-table">
+    <tr><td>经验沉淀</td><td>${r.summary_exp||'（未填写）'}</td></tr>
+    <tr><td>需规避问题</td><td>${r.summary_avoid||'（未填写）'}</td></tr>
+    <tr><td>可复用方法</td><td>${r.summary_reuse||'（未填写）'}</td></tr>
+    <tr><td>下周目标1</td><td>${r.next_goal1||'（未填写）'}</td></tr>
+    <tr><td>下周目标2</td><td>${r.next_goal2||'（未填写）'}</td></tr>
+    <tr><td>下周目标3</td><td>${r.next_goal3||'（未填写）'}</td></tr>
+    <tr><td>需停止的行为</td><td>${r.stop_behavior||'—'}</td></tr>
+    <tr><td>备注</td><td>${r.notes||'—'}</td></tr>
+  </table>`;
+}
+
+// ======== FORM ========
+function buildForm() {
+  const d = formData;
+  const sections = [
+    // Step 0: 基础信息
+    `<div class="form-section active" id="fsec-0">
+      <div class="form-section-header">
+        <div><h3>一、复盘基础信息</h3><p>填写本次复盘的基本信息和周期</p></div>
+      </div>
+      <div class="form-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">复盘标题（可选）</label>
+            <input class="form-input" id="f-title" placeholder="如：2025年第12周复盘" value="${d.title||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">复盘人 <span class="req">*</span></label>
+            <input class="form-input" id="f-reviewer" placeholder="姓名或花名" value="${d.reviewer||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">开始日期 <span class="req">*</span></label>
+            <input class="form-input" type="date" id="f-startDate" value="${d.startDate||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">结束日期 <span class="req">*</span></label>
+            <input class="form-input" type="date" id="f-endDate" value="${d.endDate||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">第几周</label>
+            <input class="form-input" id="f-weekNum" placeholder="如：12" value="${d.weekNum||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">复盘完成日期</label>
+            <input class="form-input" type="date" id="f-reviewDate" value="${d.reviewDate||''}">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">参与复盘人员（团队复盘填写）</label>
+            <input class="form-input" id="f-participants" placeholder="多人用逗号分隔" value="${d.participants||''}">
+          </div>
+        </div>
+      </div>
+    </div>`,
+
+    // Step 1: 代码工程
+    `<div class="form-section" id="fsec-1">
+      <div class="form-section-header">
+        <div><h3>二、维度1：代码工程能力</h3><p>技术/开发岗适配，按「亮点-问题-根源-动作」填写</p></div>
+      </div>
+      <div class="form-body">
+        <div class="dim-block">
+          <div class="dim-block-header">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            工程能力复盘
+          </div>
+          ${dimFormRow('dim1_highlight','本周亮点/成果','1.技术层面：\n2.需求层面：',d)}
+          ${dimFormRow('dim1_issue','存在不足/技术问题','1.技术短板：\n2.需求理解偏差：',d)}
+          ${dimFormRow('dim1_root','问题根源分析','1.技术原因：\n2.需求原因：',d)}
+          ${dimFormRow('dim1_action','下周改进动作','1.技术提升：\n2.需求把控：',d)}
+        </div>
+      </div>
+    </div>`,
+
+    // Step 2: 沟通
+    `<div class="form-section" id="fsec-2">
+      <div class="form-section-header">
+        <div><h3>三、维度2：沟通能力</h3><p>全岗位适配，记录高效与不到位的沟通场景</p></div>
+      </div>
+      <div class="form-body">
+        <div class="dim-block">
+          <div class="dim-block-header">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            沟通能力复盘
+          </div>
+          ${dimFormRow('dim2_highlight','高效沟通场景','例：与测试高效同步bug进度',d)}
+          ${dimFormRow('dim2_issue','沟通不到位问题','1.场景1：\n2.场景2：',d)}
+          ${dimFormRow('dim2_root','根源分析','1.表达层面：\n2.主动意识：',d)}
+          ${dimFormRow('dim2_action','下周改进动作','1.沟通技巧：\n2.主动同步：',d)}
+        </div>
+      </div>
+    </div>`,
+
+    // Step 3: 工作管理
+    `<div class="form-section" id="fsec-3">
+      <div class="form-section-header">
+        <div><h3>四、维度3：工作管理</h3><p>优先级执行 + 项目管控情况复盘</p></div>
+      </div>
+      <div class="form-body">
+        <div class="dim-block">
+          <div class="dim-block-header">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            工作管理复盘
+          </div>
+          ${dimFormRow('dim3_priority','本周优先级执行','对照四象限工作法：\n1.合理项：\n2.不合理项：',d)}
+          ${dimFormRow('dim3_risk','项目风险/超预期','1.风险项目：\n2.超预期项目：',d)}
+          ${dimFormRow('dim3_root','根源分析','1.优先级问题：\n2.项目风险：',d)}
+          ${dimFormRow('dim3_action','下周改进动作','1.优先级规划：\n2.项目管控：',d)}
+        </div>
+      </div>
+    </div>`,
+
+    // Step 4: 效率
+    `<div class="form-section" id="fsec-4">
+      <div class="form-section-header">
+        <div><h3>五、维度4：效率改进</h3><p>识别低效环节，制定流程与工具优化方案</p></div>
+      </div>
+      <div class="form-body">
+        <div class="dim-block">
+          <div class="dim-block-header">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            效率改进复盘
+          </div>
+          ${dimFormRow('dim4_issue','低效工作环节','例：重复编写同类代码、手动整理数据',d)}
+          ${dimFormRow('dim4_direction','效率提升方向','1.流程优化：\n2.工具/方法优化：',d)}
+          ${dimFormRow('dim4_action','下周改进动作','1.整理常用代码片段库\n2.用自动化工具替代手动整理',d)}
+        </div>
+      </div>
+    </div>`,
+
+    // Step 5: 行动 + 总结
+    `<div class="form-section" id="fsec-5">
+      <div class="form-section-header">
+        <div><h3>六、行动汇总 & 总结</h3><p>形成闭环：汇总改进动作，规划下周核心目标</p></div>
+      </div>
+      <div class="form-body">
+        <p style="font-size:13px;font-weight:500;margin-bottom:12px;color:var(--accent)">行动改进计划</p>
+        <div id="action-rows-container">${buildActionRows(d.actionItems || [{},{},{}])}</div>
+        <button class="btn btn-sm" onclick="addActionRow()" style="margin-bottom:24px">
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          添加一行
+        </button>
+        <p style="font-size:13px;font-weight:500;margin-bottom:12px;color:var(--accent)">本周总结 & 下周规划</p>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">经验沉淀</label>
+            <textarea class="form-textarea" id="f-summary_exp" placeholder="本周值得固化的方法和经验">${d.summary_exp||''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">需规避的问题</label>
+            <textarea class="form-textarea" id="f-summary_avoid" placeholder="下周需要避免的行为或错误">${d.summary_avoid||''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">可复用的方法</label>
+            <textarea class="form-textarea" id="f-summary_reuse" placeholder="可以推广使用的工作方法">${d.summary_reuse||''}</textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">下周核心目标（最多3个）</label>
+            <input class="form-input" id="f-next_goal1" placeholder="目标1" value="${d.next_goal1||''}" style="margin-bottom:8px">
+            <input class="form-input" id="f-next_goal2" placeholder="目标2" value="${d.next_goal2||''}" style="margin-bottom:8px">
+            <input class="form-input" id="f-next_goal3" placeholder="目标3" value="${d.next_goal3||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">下周需停止的行为</label>
+            <textarea class="form-textarea" id="f-stop_behavior" placeholder="例：无规划的临时加班">${d.stop_behavior||''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">备注</label>
+            <textarea class="form-textarea" id="f-notes" placeholder="其他补充内容">${d.notes||''}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>`
+  ];
+  document.getElementById('form-sections').innerHTML = sections.join('');
+}
+
+function dimFormRow(field, label, placeholder, d) {
+  return `<div class="dim-row">
+    <div class="dim-label">${label}</div>
+    <div class="dim-input"><textarea id="f-${field}" placeholder="${placeholder}" rows="3">${d[field]||''}</textarea></div>
+  </div>`;
+}
+
+let actionCount = 3;
+function buildActionRows(items) {
+  actionCount = items.length;
+  const header = `<div class="action-row-form" style="background:var(--surface2)">
+    <div class="action-cell action-cell-header">#</div>
+    <div class="action-cell action-cell-header">改进内容</div>
+    <div class="action-cell action-cell-header">优先级</div>
+    <div class="action-cell action-cell-header">完成时限</div>
+    <div class="action-cell action-cell-header">验收标准</div>
+    <div class="action-cell action-cell-header">备注</div>
+  </div>`;
+  const rows = items.map((it,i) => `<div class="action-row-form" id="arow-${i}">
+    <div class="action-cell" style="display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3)">${i+1}</div>
+    <div class="action-cell"><input placeholder="改进内容" value="${it.content||''}" onchange="updateAction(${i},'content',this.value)"></div>
+    <div class="action-cell"><select onchange="updateAction(${i},'priority',this.value)">
+      <option value="高" ${it.priority==='高'?'selected':''}>高</option>
+      <option value="中" ${it.priority==='中'?'selected':''}>中</option>
+      <option value="低" ${(it.priority==='低'||!it.priority)?'selected':''}>低</option>
+    </select></div>
+    <div class="action-cell"><input type="date" value="${it.deadline||''}" onchange="updateAction(${i},'deadline',this.value)"></div>
+    <div class="action-cell"><input placeholder="验收标准" value="${it.criteria||''}" onchange="updateAction(${i},'criteria',this.value)"></div>
+    <div class="action-cell"><input placeholder="备注" value="${it.note||''}" onchange="updateAction(${i},'note',this.value)"></div>
+  </div>`).join('');
+  return header + rows;
+}
+
+function addActionRow() {
+  if (!formData.actionItems) formData.actionItems = [];
+  formData.actionItems.push({});
+  document.getElementById('action-rows-container').innerHTML = buildActionRows(formData.actionItems);
+}
+function updateAction(i, field, val) {
+  if (!formData.actionItems) formData.actionItems = [];
+  if (!formData.actionItems[i]) formData.actionItems[i] = {};
+  formData.actionItems[i][field] = val;
+}
+
+function renderProgress() {
+  const html = STEPS.map((s, i) => {
+    const done = i < currentStep;
+    const active = i === currentStep;
+    const line = i < STEPS.length - 1 ? `<div class="step-line ${done?'done':''}"></div>` : '';
+    return `<div class="progress-step">
+      <div class="step-dot ${done?'done':''} ${active?'active':''}" onclick="goToStep(${i})">
+        ${done ? '✓' : i+1}
+      </div>
+      <span class="step-label ${done?'done':''} ${active?'active':''}">${s.short}</span>
+      ${line}
+    </div>`;
+  }).join('');
+  document.getElementById('form-progress').innerHTML = html;
+  document.getElementById('step-indicator').textContent = `第 ${currentStep+1} 步，共 ${STEPS.length} 步`;
+  document.getElementById('btn-prev').style.display = currentStep > 0 ? '' : 'none';
+  document.getElementById('btn-next').style.display = currentStep < STEPS.length-1 ? '' : 'none';
+  document.getElementById('btn-save').style.display = currentStep === STEPS.length-1 ? '' : 'none';
+}
+
+function goToStep(step) {
+  collectCurrentStep();
+  currentStep = step;
+  document.querySelectorAll('.form-section').forEach((s, i) => {
+    s.classList.toggle('active', i === currentStep);
+  });
+  renderProgress();
+}
+
+function nextStep() {
+  collectCurrentStep();
+  if (currentStep < STEPS.length - 1) {
+    currentStep++;
+    document.querySelectorAll('.form-section').forEach((s, i) => s.classList.toggle('active', i === currentStep));
+    renderProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+function prevStep() {
+  collectCurrentStep();
+  if (currentStep > 0) {
+    currentStep--;
+    document.querySelectorAll('.form-section').forEach((s, i) => s.classList.toggle('active', i === currentStep));
+    renderProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+const FORM_FIELDS = [
+  'title','reviewer','startDate','endDate','weekNum','reviewDate','participants',
+  'dim1_highlight','dim1_issue','dim1_root','dim1_action',
+  'dim2_highlight','dim2_issue','dim2_root','dim2_action',
+  'dim3_priority','dim3_risk','dim3_root','dim3_action',
+  'dim4_issue','dim4_direction','dim4_action',
+  'summary_exp','summary_avoid','summary_reuse',
+  'next_goal1','next_goal2','next_goal3','stop_behavior','notes'
+];
+
+function collectCurrentStep() {
+  FORM_FIELDS.forEach(f => {
+    const el = document.getElementById('f-' + f);
+    if (el) formData[f] = el.value;
+  });
+  if (!formData.actionItems) formData.actionItems = [];
+}
+
+function loadFormData(id) {
+  const db = getDB();
+  const r = db.find(x => x.id === id);
+  if (r) formData = { ...r };
+}
+
+function saveForm() {
+  collectCurrentStep();
+  if (!formData.reviewer || !formData.reviewer.trim()) { showToast('请填写复盘人', 'error'); goToStep(0); return; }
+  if (!formData.startDate) { showToast('请填写开始日期', 'error'); goToStep(0); return; }
+  const db = getDB();
+  if (editingId) {
+    const idx = db.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      db[idx] = { ...formData, id: editingId, updatedAt: new Date().toISOString() };
+    }
+    showToast('复盘已更新', 'success');
+  } else {
+    const rec = { ...formData, id: Date.now().toString(), createdAt: new Date().toISOString() };
+    if (rec.startDate) { const d = new Date(rec.startDate); rec.startYear = d.getFullYear(); rec.startMonth = d.getMonth()+1; }
+    db.push(rec);
+    showToast('复盘已保存', 'success');
+  }
+  saveDB(db);
+  formData = {}; editingId = null;
+  setTimeout(() => showView('list'), 800);
+}
+
+// ======== STATS ========
+function renderStats() {
+  const db = getDB();
+  const total = db.length;
+  const thisYear = db.filter(r => new Date(r.createdAt).getFullYear() === new Date().getFullYear()).length;
+  const withActions = db.filter(r => r.actionItems && r.actionItems.length > 0).length;
+  const avgActions = total ? Math.round(db.reduce((s,r)=>s+(r.actionItems||[]).length,0)/total*10)/10 : 0;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">累计复盘次数</div><div class="stat-value">${total}</div><div class="stat-sub">份记录</div></div>
+    <div class="stat-card"><div class="stat-label">今年复盘次数</div><div class="stat-value">${thisYear}</div><div class="stat-sub">份记录</div></div>
+    <div class="stat-card"><div class="stat-label">含行动计划</div><div class="stat-value">${withActions}</div><div class="stat-sub">份复盘</div></div>
+    <div class="stat-card"><div class="stat-label">平均行动数</div><div class="stat-value">${avgActions}</div><div class="stat-sub">条/次</div></div>
+  `;
+
+  // Monthly chart
+  const months = Array.from({length:12},(_,i)=>i+1);
+  const counts = months.map(m => db.filter(r => {
+    const d = new Date(r.createdAt);
+    return d.getFullYear() === new Date().getFullYear() && d.getMonth()+1 === m;
+  }).length);
+  const max = Math.max(...counts, 1);
+
+  const barHTML = months.map((m,i) => `<div class="bar-row">
+    <div class="bar-label">${m}月</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${(counts[i]/max)*100}%">
+      ${counts[i] > 0 ? `<span class="bar-val">${counts[i]}</span>` : ''}
+    </div></div>
+  </div>`).filter((_,i) => i < new Date().getMonth()+1).join('');
+
+  // Priority dist
+  const allItems = db.flatMap(r => r.actionItems || []);
+  const priorities = {高:0,中:0,低:0};
+  allItems.forEach(it => { if (it.priority) priorities[it.priority]++; });
+  const pTotal = allItems.length || 1;
+  const priorityBars = Object.entries(priorities).map(([p,c]) => `<div class="bar-row">
+    <div class="bar-label">${p}优先级</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${(c/pTotal)*100}%;background:${p==='高'?'#9b1c1c':p==='中'?'#92400e':'#2d6a4f'}">
+      ${c > 0 ? `<span class="bar-val">${c}</span>` : ''}
+    </div></div>
+  </div>`).join('');
+
+  document.getElementById('stats-charts').innerHTML = `
+    <div class="chart-card"><div class="chart-title">今年复盘频率（按月）</div><div class="bar-chart">${barHTML || '<div style="color:var(--text3);font-size:13px">暂无数据</div>'}</div></div>
+    <div class="chart-card"><div class="chart-title">行动计划优先级分布</div><div class="bar-chart">${priorityBars || '<div style="color:var(--text3);font-size:13px">暂无数据</div>'}</div></div>
+  `;
+}
+
+// ======== MODAL / DELETE ========
+function openDeleteModal(id) {
+  deleteTargetId = id;
+  document.getElementById('delete-modal').classList.add('open');
+}
+function closeModal() {
+  deleteTargetId = null;
+  document.getElementById('delete-modal').classList.remove('open');
+}
+function confirmDelete() {
+  if (!deleteTargetId) return;
+  let db = getDB();
+  db = db.filter(x => x.id !== deleteTargetId);
+  saveDB(db);
+  closeModal();
+  showToast('已删除', 'success');
+  if (currentView === 'list') filterList();
+  else showView('list');
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  const d = new Date(str);
+  if (isNaN(d)) return str;
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// Close modal on overlay click
+document.getElementById('delete-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ======== SEED DATA ========
+function seedIfEmpty() {
+  if (getDB().length > 0) return;
+  const samples = [
+    {
+      id: '1700000000001', title: '2024年第45周复盘', reviewer: '张明', weekNum: '45',
+      startDate: '2024-11-04', endDate: '2024-11-08', reviewDate: '2024-11-08',
+      startYear: 2024, startMonth: 11,
+      dim1_highlight: '1.技术层面：完成用户认证模块开发，代码评审一次通过\n2.需求层面：精准理解产品需求，无返工情况',
+      dim1_issue: '1.技术短板：新框架部分API语法不熟练，需多查文档\n2.需求理解：一个边界条件未提前确认，临时返工',
+      dim1_root: '1.技术原因：未系统阅读官方文档，靠搜索临时解决\n2.需求原因：需求对接时未做拆解梳理',
+      dim1_action: '1.每天30分钟学习框架文档，完成1个demo练习\n2.需求对接后输出文字纪要，与产品双重确认',
+      dim2_highlight: '与测试同学高效同步bug修复进度，沟通清晰，问题快速定位',
+      dim2_issue: '1.场景1：与产品经理沟通需求时，遗漏了一个关键逻辑点\n2.场景2：周三未及时同步进度，导致PM重复询问',
+      dim2_root: '1.表达层面：沟通时缺乏结构，未提炼核心要点\n2.主动意识：不紧急的同步任务容易被遗忘',
+      dim2_action: '1.重要沟通前列3个要点，结束前复述核心\n2.每天17:30在项目群同步当日进展',
+      dim3_priority: '重要紧急：用户认证模块（完成）\n重要不紧急：性能优化（推进50%）\n不合理：花了2小时整理不急的文档',
+      dim3_risk: '1.风险：下周上线前测试用例还有30%未覆盖\n2.超预期：日志模块提前1天完成',
+      dim3_root: '1.优先级：部分时间被临时性任务占用\n2.风险：测试排期未提前协调',
+      dim3_action: '1.每周日晚制定下周四象限任务清单\n2.与测试周一早上对齐排期，预留1天缓冲',
+      dim4_issue: '重复编写相同的API请求封装代码，每次都从零开始',
+      dim4_direction: '1.流程：建立团队公共工具函数库\n2.工具：使用代码片段工具（VSCode Snippets）',
+      dim4_action: '1.整理5个常用代码片段，配置到编辑器\n2.与团队分享，减少重复工作',
+      actionItems: [
+        {content:'每天30分钟学习框架文档',priority:'高',deadline:'2024-11-15',criteria:'完成3个demo练习',note:''},
+        {content:'每日17:30同步工作进展',priority:'中',deadline:'持续',criteria:'本周零漏洞',note:''},
+        {content:'整理常用代码片段库',priority:'低',deadline:'2024-11-22',criteria:'不少于5个片段',note:''},
+      ],
+      summary_exp: '「需求对接后立即输出文字纪要」这个方法本周验证有效，下周继续执行',
+      summary_avoid: '沟通时信息遗漏；低优先级任务占用核心时间',
+      summary_reuse: '每日17:30同步机制；代码评审前自查checklist',
+      next_goal1: '完成上线前所有测试用例覆盖',
+      next_goal2: '建立5个常用代码片段，配置完成',
+      next_goal3: '输出本周技术学习笔记1篇',
+      notes: '',
+      createdAt: '2024-11-08T17:30:00.000Z'
+    }
+  ];
+  saveDB(samples);
+}
+
+seedIfEmpty();
+showView('list');
+</script>
+</body>
+</html>
