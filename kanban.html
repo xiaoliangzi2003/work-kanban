@@ -1853,7 +1853,7 @@ function openTaskForm(projectId, taskId, defaultStatus) {
   document.getElementById('tf-due').value = task?.dueDate || '';
   document.getElementById('tf-desc').value = task?.description || '';
   document.getElementById('tf-type').value = task?.taskType || 'feature';
-  initMs('tf-assignees-ms', people.map(p => ({ id: p.id, label: p.name })), task?.assignees || [], '选择负责人');
+  initMs('tf-assignees-ms', people.map(p => ({ id: p.id, name: p.name })), task?.assignees || [], '选择负责人');
   if (task?.subProjectId) {
     updateSubProjectOptions(projectId, task.subProjectId);
   }
