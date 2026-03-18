@@ -782,6 +782,30 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <input class="form-control" type="date" id="tf-due">
       </div>
     </div>
+    <div class="form-row form-row-2">
+      <div class="form-group">
+        <label class="form-label">任务类型</label>
+        <select class="form-control" id="tf-type">
+          <option value="feature">功能开发</option>
+          <option value="bug">Bug修复</option>
+          <option value="doc">文档编写</option>
+          <option value="test">功能测试</option>
+          <option value="perf">性能优化</option>
+          <option value="comm">沟通协调</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">负责人</label>
+        <div class="ms-wrap" id="tf-assignees-ms">
+          <div class="ms-trigger" onclick="toggleMs('tf-assignees-ms')">
+            <div class="ms-tags" id="tf-assignees-ms-tags"><span class="ms-placeholder">选择负责人</span></div>
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="ms-dropdown" id="tf-assignees-ms-dropdown"></div>
+        </div>
+      </div>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">描述</label>
@@ -876,6 +900,8 @@ const STRATEGY_LABELS = { avoid:'规避', mitigate:'减轻', accept:'接受', tr
 const RISK_STATUS_LABELS = { pending:'待处理', monitoring:'监控中', closed:'已关闭' };
 const TASK_STATUS_LABELS = { todo:'待办', doing:'进行中', review:'待验证', done:'已完成' };
 const TASK_COLS = ['todo','doing','review','done'];
+const TASK_TYPE_LABELS = { feature:'功能开发', bug:'Bug修复', doc:'文档编写', test:'功能测试', perf:'性能优化', comm:'沟通协调', other:'其他' };
+const TASK_TYPE_COLORS = { feature:'#dbeafe:#1e40af', bug:'#fee2e2:#9b1c1c', doc:'#e8f5ee:#2d6a4f', test:'#fef3c7:#92400e', perf:'#ede9fe:#5b21b6', comm:'#e0f2fe:#0369a1', other:'#f1f5f9:#475569' };
 const ROLE_LABELS = { product_design:'产品设计', frontend:'前端', backend:'后端', testing:'测试' };
 const SUB_STATUS_LABELS = { pending_design:'待产品设计', pending_dev:'待开发', developing:'开发中', integration:'联调中', testing:'测试中', done:'已完成' };
 
@@ -1475,14 +1501,21 @@ function taskCardHtml(t, projectId, showSp) {
   const dueCls = t.dueDate && isOverdue(t.dueDate) && t.status !== 'done' ? 'overdue' : '';
   const spBadge = showSp && t._spName ? `<span class="task-card-project">${escHtml(t._spName)}</span>` : '';
   const projBadge = !showSp && t._projectName ? `<span class="task-card-project">${escHtml(t._projectName)}</span>` : '';
+  const typeLabel = TASK_TYPE_LABELS[t.taskType] || '';
+  const typeColors = t.taskType && TASK_TYPE_COLORS[t.taskType] ? TASK_TYPE_COLORS[t.taskType].split(':') : null;
+  const typeBadge = typeLabel ? `<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:${typeColors?typeColors[0]:'var(--surface2)'};color:${typeColors?typeColors[1]:'var(--text3)'}">${typeLabel}</span>` : '';
+  const assigneeNames = (t.assignees || []).map(id => getPersonName(id)).filter(Boolean);
+  const assigneeBadge = assigneeNames.length ? `<span class="task-card-project" title="${escHtml(assigneeNames.join('、'))}">👤 ${escHtml(assigneeNames.slice(0,2).join('、'))}${assigneeNames.length>2?` +${assigneeNames.length-2}`:''}</span>` : '';
   return `
     <div class="task-card" draggable="true" id="task-${t.id}"
       ondragstart="dragStart(event,'${t.id}','${projectId || t._projectId}')"
       onclick="openTaskForm('${projectId || t._projectId}', '${t.id}', '${t.status}')">
       <div class="task-card-title">${escHtml(t.title)}</div>
       <div class="task-card-meta">
+        ${typeBadge}
         <span class="badge badge-priority-${t.priority}">${PRIORITY_LABELS[t.priority]}</span>
         ${spBadge}${projBadge}
+        ${assigneeBadge}
         ${t.dueDate ? `<span class="task-card-due ${dueCls}">${t.dueDate}</span>` : ''}
       </div>
     </div>`;
@@ -1819,6 +1852,8 @@ function openTaskForm(projectId, taskId, defaultStatus) {
   document.getElementById('tf-status').value = task?.status || defaultStatus || 'todo';
   document.getElementById('tf-due').value = task?.dueDate || '';
   document.getElementById('tf-desc').value = task?.description || '';
+  document.getElementById('tf-type').value = task?.taskType || 'feature';
+  initMs('tf-assignees-ms', people.map(p => ({ id: p.id, label: p.name })), task?.assignees || [], '选择负责人');
   if (task?.subProjectId) {
     updateSubProjectOptions(projectId, task.subProjectId);
   }
@@ -1841,6 +1876,8 @@ async function saveTaskForm() {
     status: document.getElementById('tf-status').value,
     dueDate: document.getElementById('tf-due').value,
     description: document.getElementById('tf-desc').value.trim(),
+    taskType: document.getElementById('tf-type').value,
+    assignees: getMsValues('tf-assignees-ms'),
     subProjectId: spId, projectId: projId };
   // If editing, remove from old location first
   if (editingTaskId) {
