@@ -175,9 +175,46 @@ body {
 .badge-status-active { background: #dbeafe; color: #1e40af; }
 .badge-status-paused { background: var(--amber-bg); color: var(--amber); }
 .badge-status-done { background: var(--green-bg); color: var(--green); }
+.badge-priority-urgent { background: #ffd7d7; color: #7f0000; }
 .badge-priority-high { background: var(--red-bg); color: var(--red); }
 .badge-priority-medium { background: var(--amber-bg); color: var(--amber); }
 .badge-priority-low { background: var(--green-bg); color: var(--green); }
+[data-theme="dark"] .badge-priority-urgent { background: #5c0000; color: #ffb3b3; }
+
+/* ======== MULTI-SELECT ======== */
+.ms-wrap { position: relative; user-select: none; }
+.ms-trigger { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; font-size: 13px; min-height: 36px; }
+.ms-trigger:focus-within { border-color: var(--accent2); }
+.ms-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); z-index: 200; max-height: 200px; overflow-y: auto; box-shadow: var(--shadow2); display: none; }
+.ms-wrap.open .ms-dropdown { display: block; }
+.ms-option { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
+.ms-option:hover { background: var(--surface2); }
+.ms-option input { width: 14px; height: 14px; cursor: pointer; accent-color: var(--accent2); }
+.ms-placeholder { color: var(--text3); }
+.ms-tags { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.ms-tag { background: var(--accent-light); color: var(--accent2); padding: 1px 8px; border-radius: 20px; font-size: 11px; }
+
+/* ======== PEOPLE VIEW ======== */
+.people-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.people-table th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 500; color: var(--text3); border-bottom: 2px solid var(--border); }
+.people-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.people-table tr:last-child td { border-bottom: none; }
+.people-table tr:hover td { background: var(--surface2); }
+
+/* ======== SUBPROJECT ROLES ======== */
+.role-section { margin-bottom: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: visible; }
+.role-section-header { padding: 8px 12px; background: var(--surface2); font-size: 12px; font-weight: 500; color: var(--text2); }
+.role-section-body { padding: 10px 12px; }
+.role-progress-wrap { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.role-progress-wrap input[type=range] { flex: 1; accent-color: var(--accent2); }
+.role-progress-wrap span { font-size: 13px; font-weight: 500; color: var(--accent2); min-width: 36px; text-align: right; }
+.sp-roles-display { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.sp-role-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.sp-role-label { min-width: 52px; color: var(--text3); flex-shrink: 0; }
+.sp-role-people { flex: 1; color: var(--text2); }
+.sp-role-progress-bar { width: 60px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.sp-role-progress-fill { height: 100%; background: var(--accent2); border-radius: 2px; }
+.sp-role-pct { min-width: 28px; text-align: right; color: var(--text3); }
 .badge-risk-high { background: var(--red-bg); color: var(--red); }
 .badge-risk-medium { background: var(--amber-bg); color: var(--amber); }
 .badge-risk-low { background: var(--green-bg); color: var(--green); }
@@ -306,6 +343,10 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         风险
       </div>
+      <div class="nav-item" data-view="people" onclick="showView('people')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        人员管理
+      </div>
     </div>
     <div class="sidebar-switch">
       <div class="switch-label">切换系统</div>
@@ -320,6 +361,11 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
     </div>
     <div class="sidebar-footer">
       <div id="folder-status-text">数据存储于本地浏览器</div>
+      <div id="connect-folder-btn-wrap" style="display:none;margin-top:8px">
+        <button onclick="selectDataFolder()" style="width:100%;padding:6px 10px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);font-size:11px;font-family:inherit;cursor:pointer;">
+          连接文件夹
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -372,6 +418,7 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
           </select>
           <select class="filter-select" id="filter-priority" onchange="renderList()">
             <option value="">所有优先级</option>
+            <option value="urgent">紧急</option>
             <option value="high">高</option>
             <option value="medium">中</option>
             <option value="low">低</option>
@@ -402,6 +449,11 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
       <!-- RISKS VIEW -->
       <div id="view-risks" class="view">
         <div id="risks-content"></div>
+      </div>
+
+      <!-- PEOPLE VIEW -->
+      <div id="view-people" class="view">
+        <div id="people-content"></div>
       </div>
     </div>
   </div>
@@ -437,6 +489,7 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
       <div class="form-group">
         <label class="form-label">优先级</label>
         <select class="form-control" id="f-priority">
+          <option value="urgent">紧急</option>
           <option value="high">高</option>
           <option value="medium" selected>中</option>
           <option value="low">低</option>
@@ -444,7 +497,13 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
       </div>
       <div class="form-group">
         <label class="form-label">负责人</label>
-        <input class="form-control" id="f-owner" placeholder="项目负责人">
+        <div class="ms-wrap" id="f-owner-ms">
+          <div class="ms-trigger" onclick="toggleMs('f-owner-ms')">
+            <div class="ms-tags" id="f-owner-ms-tags"><span class="ms-placeholder">选择负责人</span></div>
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="ms-dropdown" id="f-owner-ms-dropdown"></div>
+        </div>
       </div>
     </div>
     <div class="form-row form-row-3">
@@ -503,27 +562,26 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <textarea class="form-control" id="sf-desc" placeholder="子项目描述"></textarea>
       </div>
     </div>
-    <div class="form-row form-row-3">
+    <div class="form-row form-row-2">
       <div class="form-group">
         <label class="form-label">状态</label>
         <select class="form-control" id="sf-status">
-          <option value="planning">规划中</option>
-          <option value="active">进行中</option>
-          <option value="paused">已暂停</option>
+          <option value="pending_design">待产品设计</option>
+          <option value="pending_dev">待开发</option>
+          <option value="developing">开发中</option>
+          <option value="integration">联调中</option>
+          <option value="testing">测试中</option>
           <option value="done">已完成</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label">优先级</label>
         <select class="form-control" id="sf-priority">
+          <option value="urgent">紧急</option>
           <option value="high">高</option>
           <option value="medium" selected>中</option>
           <option value="low">低</option>
         </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">负责人</label>
-        <input class="form-control" id="sf-owner" placeholder="负责人">
       </div>
     </div>
     <div class="form-row form-row-2">
@@ -536,12 +594,72 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <input class="form-control" type="date" id="sf-due">
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">进度</label>
-        <div class="progress-input-wrap">
-          <input type="range" min="0" max="100" step="5" id="sf-progress" value="0" oninput="document.getElementById('sf-progress-val').textContent=this.value+'%'">
-          <span id="sf-progress-val">0%</span>
+    <div class="form-divider">角色分配与进度</div>
+    <!-- Product Design Role -->
+    <div class="role-section">
+      <div class="role-section-header">产品设计</div>
+      <div class="role-section-body">
+        <div class="ms-wrap" id="sf-role-product_design-ms">
+          <div class="ms-trigger" onclick="toggleMs('sf-role-product_design-ms')">
+            <div class="ms-tags" id="sf-role-product_design-ms-tags"><span class="ms-placeholder">选择产品设计人员</span></div>
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="ms-dropdown" id="sf-role-product_design-ms-dropdown"></div>
+        </div>
+        <div class="role-progress-wrap" style="margin-top:8px">
+          <input type="range" min="0" max="100" step="5" id="sf-prog-product_design" value="0" oninput="document.getElementById('sf-prog-product_design-val').textContent=this.value+'%'">
+          <span id="sf-prog-product_design-val">0%</span>
+        </div>
+      </div>
+    </div>
+    <!-- Frontend Role -->
+    <div class="role-section">
+      <div class="role-section-header">前端</div>
+      <div class="role-section-body">
+        <div class="ms-wrap" id="sf-role-frontend-ms">
+          <div class="ms-trigger" onclick="toggleMs('sf-role-frontend-ms')">
+            <div class="ms-tags" id="sf-role-frontend-ms-tags"><span class="ms-placeholder">选择前端人员</span></div>
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="ms-dropdown" id="sf-role-frontend-ms-dropdown"></div>
+        </div>
+        <div class="role-progress-wrap" style="margin-top:8px">
+          <input type="range" min="0" max="100" step="5" id="sf-prog-frontend" value="0" oninput="document.getElementById('sf-prog-frontend-val').textContent=this.value+'%'">
+          <span id="sf-prog-frontend-val">0%</span>
+        </div>
+      </div>
+    </div>
+    <!-- Backend Role -->
+    <div class="role-section">
+      <div class="role-section-header">后端</div>
+      <div class="role-section-body">
+        <div class="ms-wrap" id="sf-role-backend-ms">
+          <div class="ms-trigger" onclick="toggleMs('sf-role-backend-ms')">
+            <div class="ms-tags" id="sf-role-backend-ms-tags"><span class="ms-placeholder">选择后端人员</span></div>
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="ms-dropdown" id="sf-role-backend-ms-dropdown"></div>
+        </div>
+        <div class="role-progress-wrap" style="margin-top:8px">
+          <input type="range" min="0" max="100" step="5" id="sf-prog-backend" value="0" oninput="document.getElementById('sf-prog-backend-val').textContent=this.value+'%'">
+          <span id="sf-prog-backend-val">0%</span>
+        </div>
+      </div>
+    </div>
+    <!-- Testing Role -->
+    <div class="role-section">
+      <div class="role-section-header">测试</div>
+      <div class="role-section-body">
+        <div class="ms-wrap" id="sf-role-testing-ms">
+          <div class="ms-trigger" onclick="toggleMs('sf-role-testing-ms')">
+            <div class="ms-tags" id="sf-role-testing-ms-tags"><span class="ms-placeholder">选择测试人员</span></div>
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="ms-dropdown" id="sf-role-testing-ms-dropdown"></div>
+        </div>
+        <div class="role-progress-wrap" style="margin-top:8px">
+          <input type="range" min="0" max="100" step="5" id="sf-prog-testing" value="0" oninput="document.getElementById('sf-prog-testing-val').textContent=this.value+'%'">
+          <span id="sf-prog-testing-val">0%</span>
         </div>
       </div>
     </div>
@@ -644,6 +762,7 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
       <div class="form-group">
         <label class="form-label">优先级</label>
         <select class="form-control" id="tf-priority">
+          <option value="urgent">紧急</option>
           <option value="high">高</option>
           <option value="medium" selected>中</option>
           <option value="low">低</option>
@@ -676,6 +795,43 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
   </div>
 </div>
 
+<!-- People Form Modal -->
+<div class="modal-overlay" id="people-modal">
+  <div class="modal">
+    <h3 id="people-modal-title">新建人员</h3>
+    <div class="modal-sub">填写人员信息与角色</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">姓名 <span class="required">*</span></label>
+        <input class="form-control" id="pf-name" placeholder="人员姓名">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">角色</label>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="pf-role-product_design" style="accent-color:var(--accent2)"> 产品设计
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="pf-role-frontend" style="accent-color:var(--accent2)"> 前端
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="pf-role-backend" style="accent-color:var(--accent2)"> 后端
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="pf-role-testing" style="accent-color:var(--accent2)"> 测试
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('people-modal')">取消</button>
+      <button class="btn btn-primary" onclick="savePersonForm()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Modal -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal confirm-modal">
@@ -695,7 +851,9 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
 const IDB_NAME = 'weekly_review_idb';
 const IDB_STORE = 'handles';
 let projects = [];
+let people = [];
 let dataFolderHandle = null;
+let dataRootHandle = null;
 let currentView = 'dashboard';
 let currentProjectId = null;
 let currentDetailTab = 'subprojects';
@@ -703,18 +861,23 @@ let editingProjectId = null;
 let editingSubProjectId = null;
 let editingRiskId = null;
 let editingTaskId = null;
+let editingPersonId = null;
 let taskFormProjectId = null;
 let taskFormStatus = 'todo';
 let pendingConfirmFn = null;
+let peopleCurrentPage = 1;
+const PEOPLE_PER_PAGE = 10;
 
 const FSA_AVAILABLE = ('showDirectoryPicker' in window);
 
 const STATUS_LABELS = { planning:'规划中', active:'进行中', paused:'已暂停', done:'已完成' };
-const PRIORITY_LABELS = { high:'高', medium:'中', low:'低' };
+const PRIORITY_LABELS = { urgent:'紧急', high:'高', medium:'中', low:'低' };
 const STRATEGY_LABELS = { avoid:'规避', mitigate:'减轻', accept:'接受', transfer:'转移' };
 const RISK_STATUS_LABELS = { pending:'待处理', monitoring:'监控中', closed:'已关闭' };
 const TASK_STATUS_LABELS = { todo:'待办', doing:'进行中', review:'待验证', done:'已完成' };
 const TASK_COLS = ['todo','doing','review','done'];
+const ROLE_LABELS = { product_design:'产品设计', frontend:'前端', backend:'后端', testing:'测试' };
+const SUB_STATUS_LABELS = { pending_design:'待产品设计', pending_dev:'待开发', developing:'开发中', integration:'联调中', testing:'测试中', done:'已完成' };
 
 // ======== IDB HELPERS ========
 function openIDB() {
@@ -768,8 +931,8 @@ async function tryRestoreFolder() {
   } catch {}
 }
 async function getOrCreateProjectsSubfolder(rootHandle) {
-  const dataDir = await rootHandle.getDirectoryHandle('data', { create: true });
-  return await dataDir.getDirectoryHandle('projects', { create: true });
+  dataRootHandle = await rootHandle.getDirectoryHandle('data', { create: true });
+  return await dataRootHandle.getDirectoryHandle('projects', { create: true });
 }
 async function selectDataFolder() {
   if (!FSA_AVAILABLE) { showToast('您的浏览器不支持文件系统访问 API', 'error'); return; }
@@ -779,6 +942,7 @@ async function selectDataFolder() {
     dataFolderHandle = await getOrCreateProjectsSubfolder(rootHandle);
     updateFolderUI(true);
     await loadFromFS();
+    await loadPeopleFromFS();
     showToast('数据文件夹已连接', 'success');
     renderCurrentView();
   } catch (e) {
@@ -818,16 +982,87 @@ async function deleteProjectFromFS(proj) {
 function updateFolderUI(connected) {
   const banner = document.getElementById('folder-banner');
   const statusText = document.getElementById('folder-status-text');
+  const connectBtn = document.getElementById('connect-folder-btn-wrap');
   if (connected) {
     banner.style.display = 'none';
     statusText.textContent = '✓ JSON 文件已连接';
     statusText.style.color = 'rgba(255,255,255,0.85)';
+    if (connectBtn) connectBtn.style.display = 'none';
   } else {
-    banner.style.display = 'flex';
-    statusText.textContent = '未选择数据文件夹';
+    banner.style.display = 'none';
+    statusText.textContent = '未连接数据文件夹';
     statusText.style.color = 'rgba(255,255,255,0.5)';
+    if (connectBtn) connectBtn.style.display = 'block';
   }
 }
+
+// ======== PEOPLE FILE SYSTEM ========
+async function loadPeopleFromFS() {
+  if (!dataRootHandle) { people = []; return; }
+  try {
+    const fh = await dataRootHandle.getFileHandle('people.json', { create: false });
+    const file = await fh.getFile();
+    const text = await file.text();
+    people = JSON.parse(text);
+    if (!Array.isArray(people)) people = [];
+  } catch { people = []; }
+}
+async function savePeopleToFS() {
+  if (!dataRootHandle) return;
+  try {
+    const fh = await dataRootHandle.getFileHandle('people.json', { create: true });
+    const writable = await fh.createWritable();
+    await writable.write(JSON.stringify(people, null, 2));
+    await writable.close();
+  } catch (e) { showToast('保存人员数据失败：' + e.message, 'error'); }
+}
+
+// ======== MULTI-SELECT ========
+function toggleMs(wrapperId) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  const isOpen = wrap.classList.contains('open');
+  // Close all other open multi-selects
+  document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  if (!isOpen) wrap.classList.add('open');
+}
+function initMs(wrapperId, options, selectedIds, placeholder) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  const dropdown = document.getElementById(wrapperId + '-dropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = options.map(opt => `
+    <label class="ms-option">
+      <input type="checkbox" value="${opt.id}" ${selectedIds.includes(opt.id)?'checked':''} onchange="updateMsTags('${wrapperId}','${placeholder}')">
+      ${escHtml(opt.name)}
+    </label>`).join('');
+  updateMsTags(wrapperId, placeholder);
+}
+function updateMsTags(wrapperId, placeholder) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  const tagsEl = document.getElementById(wrapperId + '-tags');
+  const checked = Array.from(wrap.querySelectorAll('input[type=checkbox]:checked'));
+  if (!checked.length) {
+    tagsEl.innerHTML = `<span class="ms-placeholder">${placeholder || '请选择'}</span>`;
+  } else {
+    tagsEl.innerHTML = checked.map(cb => {
+      const p = people.find(x => x.id === cb.value);
+      return `<span class="ms-tag">${escHtml(p ? p.name : cb.value)}</span>`;
+    }).join('');
+  }
+}
+function getMsValues(wrapperId) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return [];
+  return Array.from(wrap.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+}
+// Close multi-selects when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  }
+});
 
 // ======== DATA HELPERS ========
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -861,7 +1096,7 @@ function calcRiskLevel(impact, prob) {
 }
 function getEffectiveProgress(proj) {
   if (proj.subProjects && proj.subProjects.length > 0) {
-    const sum = proj.subProjects.reduce((a, sp) => a + (sp.progress || 0), 0);
+    const sum = proj.subProjects.reduce((a, sp) => a + getSpProgress(sp), 0);
     return Math.round(sum / proj.subProjects.length);
   }
   return proj.progress || 0;
@@ -884,10 +1119,16 @@ function showView(view) {
   const breadcrumb = document.getElementById('breadcrumb');
   breadcrumb.style.display = 'none';
   const newBtn = document.getElementById('topbar-new-btn');
-  newBtn.style.display = '';
-  newBtn.onclick = () => openProjectForm(null);
-  newBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> 新建项目';
-  const titles = { dashboard:'总览', list:'项目列表', detail:'项目详情', board:'任务看板', risks:'风险管理' };
+  if (view === 'people') {
+    newBtn.style.display = '';
+    newBtn.onclick = () => openPersonModal(null);
+    newBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> 新建人员';
+  } else {
+    newBtn.style.display = '';
+    newBtn.onclick = () => openProjectForm(null);
+    newBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> 新建项目';
+  }
+  const titles = { dashboard:'总览', list:'项目列表', detail:'项目详情', board:'任务看板', risks:'风险管理', people:'人员管理' };
   document.getElementById('topbar-title').textContent = titles[view] || '';
   renderCurrentView();
 }
@@ -914,6 +1155,7 @@ function renderCurrentView() {
   else if (currentView === 'detail' && currentProjectId) renderDetail(currentProjectId);
   else if (currentView === 'board') renderBoard();
   else if (currentView === 'risks') renderRisksView();
+  else if (currentView === 'people') renderPeopleView();
 }
 
 // ======== DASHBOARD ========
@@ -1085,25 +1327,51 @@ function renderDetailTab(projectId) {
 }
 
 // ======== SUBPROJECTS TAB ========
+function getSpProgress(sp) {
+  if (sp.roleProgress) {
+    const vals = Object.values(sp.roleProgress);
+    if (vals.length) return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  }
+  return sp.progress || 0;
+}
+function getPersonName(id) {
+  const p = people.find(x => x.id === id);
+  return p ? p.name : id;
+}
 function renderSubProjectsTab(proj) {
   const subs = proj.subProjects || [];
-  const listHtml = subs.length ? subs.map((sp, idx) => {
-    const p = sp.progress || 0;
+  const listHtml = subs.length ? subs.map((sp) => {
+    const overallProgress = getSpProgress(sp);
+    const statusLabel = SUB_STATUS_LABELS[sp.status] || STATUS_LABELS[sp.status] || sp.status || '';
+    const statusBadgeClass = sp.status === 'done' ? 'badge-status-done' : sp.status === 'developing' || sp.status === 'active' ? 'badge-status-active' : sp.status === 'testing' || sp.status === 'integration' ? 'badge-status-paused' : 'badge-status-planning';
+    const roleKeys = ['product_design','frontend','backend','testing'];
+    const roleBars = roleKeys.map(role => {
+      const owners = sp.owners ? (sp.owners[role] || []) : [];
+      const pct = sp.roleProgress ? (sp.roleProgress[role] || 0) : 0;
+      const names = owners.map(id => getPersonName(id)).join(', ');
+      return `<div class="sp-role-row">
+        <span class="sp-role-label">${ROLE_LABELS[role]}</span>
+        <span class="sp-role-people">${escHtml(names || '—')}</span>
+        <div class="sp-role-progress-bar"><div class="sp-role-progress-fill" style="width:${pct}%"></div></div>
+        <span class="sp-role-pct">${pct}%</span>
+      </div>`;
+    }).join('');
     return `
-      <div class="subproject-item">
-        <div class="subproject-item-info">
+      <div class="subproject-item" style="align-items:flex-start">
+        <div class="subproject-item-info" style="flex:1">
           <div class="subproject-item-name">${escHtml(sp.name)}</div>
-          <div class="subproject-item-meta">
-            <span class="badge badge-status-${sp.status}">${STATUS_LABELS[sp.status]}</span>
-            <span>${sp.owner ? '负责人：' + escHtml(sp.owner) : ''}</span>
+          <div class="subproject-item-meta" style="margin-bottom:6px">
+            <span class="badge ${statusBadgeClass}">${statusLabel}</span>
+            <span class="badge badge-priority-${sp.priority}">${PRIORITY_LABELS[sp.priority]||''}</span>
             <span>${sp.dueDate ? '截止：' + sp.dueDate : ''}</span>
           </div>
+          <div class="sp-roles-display">${roleBars}</div>
         </div>
-        <div class="subproject-item-progress">
-          <div style="font-size:11px;color:var(--text3);text-align:right">${p}%</div>
-          <div class="subproject-item-progress-bar"><div class="subproject-item-progress-fill" style="width:${p}%"></div></div>
+        <div class="subproject-item-progress" style="margin-left:12px">
+          <div style="font-size:11px;color:var(--text3);text-align:right">${overallProgress}%</div>
+          <div class="subproject-item-progress-bar"><div class="subproject-item-progress-fill" style="width:${overallProgress}%"></div></div>
         </div>
-        <div class="subproject-item-actions">
+        <div class="subproject-item-actions" style="margin-left:8px">
           <button class="icon-btn" title="编辑" onclick="openSubProjectForm('${proj.id}','${sp.id}')">
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
           </button>
@@ -1287,6 +1555,91 @@ function renderRisksView() {
     <div style="overflow-x:auto">${tableHtml}</div>`;
 }
 
+// ======== PEOPLE VIEW ========
+function renderPeopleView() {
+  const total = people.length;
+  const totalPages = Math.max(1, Math.ceil(total / PEOPLE_PER_PAGE));
+  if (peopleCurrentPage > totalPages) peopleCurrentPage = totalPages;
+  const start = (peopleCurrentPage - 1) * PEOPLE_PER_PAGE;
+  const paginated = people.slice(start, start + PEOPLE_PER_PAGE);
+  const tableHtml = paginated.length ? `
+    <table class="people-table">
+      <thead><tr><th>姓名</th><th>角色</th><th>操作</th></tr></thead>
+      <tbody>
+        ${paginated.map(p => {
+          const roleNames = (p.roles || []).map(r => ROLE_LABELS[r] || r).join(', ');
+          return `<tr>
+            <td style="font-weight:500">${escHtml(p.name)}</td>
+            <td>${escHtml(roleNames || '—')}</td>
+            <td><div class="risk-actions">
+              <button class="icon-btn" onclick="openPersonModal('${p.id}')"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+              <button class="icon-btn delete" onclick="deletePersonConfirm('${p.id}')"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+            </div></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : '<div class="empty-state" style="padding:60px 0"><h3>暂无人员数据</h3><p>点击"新建人员"添加第一位成员</p></div>';
+  const paginationHtml = totalPages > 1 ? `
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:16px">
+      <span style="font-size:12px;color:var(--text3)">第 ${peopleCurrentPage} / ${totalPages} 页，共 ${total} 条</span>
+      <button class="btn btn-sm" onclick="setPeoplePage(${peopleCurrentPage-1})" ${peopleCurrentPage<=1?'disabled':''}>上一页</button>
+      <button class="btn btn-sm" onclick="setPeoplePage(${peopleCurrentPage+1})" ${peopleCurrentPage>=totalPages?'disabled':''}>下一页</button>
+    </div>` : '';
+  document.getElementById('people-content').innerHTML = `
+    <div class="section-actions" style="margin-bottom:16px">
+      <div class="section-title">人员列表（${total} 人）</div>
+      <button class="btn btn-sm btn-primary" onclick="openPersonModal(null)">+ 新建人员</button>
+    </div>
+    <div style="overflow-x:auto">${tableHtml}</div>
+    ${paginationHtml}`;
+}
+function setPeoplePage(p) {
+  const totalPages = Math.max(1, Math.ceil(people.length / PEOPLE_PER_PAGE));
+  if (p < 1 || p > totalPages) return;
+  peopleCurrentPage = p;
+  renderPeopleView();
+}
+function openPersonModal(personId) {
+  editingPersonId = personId;
+  const person = personId ? people.find(p => p.id === personId) : null;
+  document.getElementById('people-modal-title').textContent = person ? '编辑人员' : '新建人员';
+  document.getElementById('pf-name').value = person?.name || '';
+  const roleKeys = ['product_design','frontend','backend','testing'];
+  roleKeys.forEach(role => {
+    const cb = document.getElementById(`pf-role-${role}`);
+    if (cb) cb.checked = person ? (person.roles || []).includes(role) : false;
+  });
+  openModal('people-modal');
+}
+async function savePersonForm() {
+  const name = document.getElementById('pf-name').value.trim();
+  if (!name) { showToast('请填写姓名', 'error'); return; }
+  const roleKeys = ['product_design','frontend','backend','testing'];
+  const roles = roleKeys.filter(r => document.getElementById(`pf-role-${r}`)?.checked);
+  if (editingPersonId) {
+    const idx = people.findIndex(p => p.id === editingPersonId);
+    if (idx >= 0) people[idx] = { ...people[idx], name, roles };
+  } else {
+    people.push({ id: genId(), name, roles, createdAt: new Date().toISOString() });
+  }
+  await savePeopleToFS();
+  closeModal('people-modal');
+  showToast(editingPersonId ? '人员已更新' : '人员已添加', 'success');
+  renderPeopleView();
+}
+function deletePersonConfirm(personId) {
+  const person = people.find(p => p.id === personId);
+  document.getElementById('confirm-title').textContent = '确认删除人员';
+  document.getElementById('confirm-msg').textContent = `确定删除人员「${person?.name || ''}」吗？此操作无法撤销。`;
+  pendingConfirmFn = async () => {
+    people = people.filter(p => p.id !== personId);
+    await savePeopleToFS();
+    showToast('人员已删除', 'success');
+    renderPeopleView();
+  };
+  openModal('confirm-modal');
+}
+
 // ======== PROJECT FORM ========
 function openProjectForm(projectId) {
   editingProjectId = projectId;
@@ -1297,7 +1650,6 @@ function openProjectForm(projectId) {
   document.getElementById('f-desc').value = proj?.description || '';
   document.getElementById('f-status').value = proj?.status || 'planning';
   document.getElementById('f-priority').value = proj?.priority || 'medium';
-  document.getElementById('f-owner').value = proj?.owner || '';
   document.getElementById('f-start').value = proj?.startDate || '';
   document.getElementById('f-due').value = proj?.dueDate || '';
   document.getElementById('f-completed').value = proj?.completedDate || '';
@@ -1306,6 +1658,9 @@ function openProjectForm(projectId) {
   document.getElementById('f-progress-val').textContent = prog + '%';
   document.getElementById('f-tags').value = (proj?.tags||[]).join(', ');
   document.getElementById('f-notes').value = proj?.notes || '';
+  // Initialize owner multi-select
+  const selectedOwners = proj?.owners || (proj?.owner ? [proj.owner] : []);
+  initMs('f-owner-ms', people.map(p=>({id:p.id,name:p.name})), selectedOwners, '选择负责人');
   openModal('project-modal');
 }
 async function saveProjectForm() {
@@ -1318,7 +1673,8 @@ async function saveProjectForm() {
   proj.description = document.getElementById('f-desc').value.trim();
   proj.status = document.getElementById('f-status').value;
   proj.priority = document.getElementById('f-priority').value;
-  proj.owner = document.getElementById('f-owner').value.trim();
+  proj.owners = getMsValues('f-owner-ms');
+  proj.owner = proj.owners.map(id => getPersonName(id)).join(', ');
   proj.startDate = document.getElementById('f-start').value;
   proj.dueDate = document.getElementById('f-due').value;
   proj.completedDate = document.getElementById('f-completed').value;
@@ -1341,14 +1697,22 @@ function openSubProjectForm(projectId, subProjectId) {
   document.getElementById('subproject-modal-title').textContent = sp ? '编辑子项目' : '新建子项目';
   document.getElementById('sf-name').value = sp?.name || '';
   document.getElementById('sf-desc').value = sp?.description || '';
-  document.getElementById('sf-status').value = sp?.status || 'planning';
+  document.getElementById('sf-status').value = sp?.status || 'pending_design';
   document.getElementById('sf-priority').value = sp?.priority || 'medium';
-  document.getElementById('sf-owner').value = sp?.owner || '';
   document.getElementById('sf-start').value = sp?.startDate || '';
   document.getElementById('sf-due').value = sp?.dueDate || '';
-  const prog = sp?.progress || 0;
-  document.getElementById('sf-progress').value = prog;
-  document.getElementById('sf-progress-val').textContent = prog + '%';
+  // Initialize role multi-selects and progress
+  const roleKeys = ['product_design','frontend','backend','testing'];
+  const placeholders = { product_design:'选择产品设计人员', frontend:'选择前端人员', backend:'选择后端人员', testing:'选择测试人员' };
+  roleKeys.forEach(role => {
+    const selected = sp?.owners ? (sp.owners[role] || []) : [];
+    initMs(`sf-role-${role}-ms`, people.map(p=>({id:p.id,name:p.name})), selected, placeholders[role]);
+    const pct = sp?.roleProgress ? (sp.roleProgress[role] || 0) : 0;
+    const rangeEl = document.getElementById(`sf-prog-${role}`);
+    const valEl = document.getElementById(`sf-prog-${role}-val`);
+    if (rangeEl) rangeEl.value = pct;
+    if (valEl) valEl.textContent = pct + '%';
+  });
   openModal('subproject-modal');
 }
 async function saveSubProjectForm() {
@@ -1357,6 +1721,14 @@ async function saveSubProjectForm() {
   const proj = getProject(subProjectFormProjectId);
   if (!proj) return;
   if (!proj.subProjects) proj.subProjects = [];
+  const roleKeys = ['product_design','frontend','backend','testing'];
+  const owners = {};
+  const roleProgress = {};
+  roleKeys.forEach(role => {
+    owners[role] = getMsValues(`sf-role-${role}-ms`);
+    roleProgress[role] = parseInt(document.getElementById(`sf-prog-${role}`)?.value) || 0;
+  });
+  const avgProgress = Math.round(Object.values(roleProgress).reduce((a,b)=>a+b,0)/roleKeys.length);
   if (editingSubProjectId) {
     const idx = proj.subProjects.findIndex(s=>s.id===editingSubProjectId);
     if (idx >= 0) {
@@ -1364,16 +1736,16 @@ async function saveSubProjectForm() {
         name, description: document.getElementById('sf-desc').value.trim(),
         status: document.getElementById('sf-status').value,
         priority: document.getElementById('sf-priority').value,
-        owner: document.getElementById('sf-owner').value.trim(),
+        owners, roleProgress, progress: avgProgress,
         startDate: document.getElementById('sf-start').value,
-        dueDate: document.getElementById('sf-due').value,
-        progress: parseInt(document.getElementById('sf-progress').value)||0 };
+        dueDate: document.getElementById('sf-due').value };
     }
   } else {
     proj.subProjects.push({ id: genId(), name, description: document.getElementById('sf-desc').value.trim(),
       status: document.getElementById('sf-status').value, priority: document.getElementById('sf-priority').value,
-      owner: document.getElementById('sf-owner').value.trim(), startDate: document.getElementById('sf-start').value,
-      dueDate: document.getElementById('sf-due').value, progress: parseInt(document.getElementById('sf-progress').value)||0,
+      owners, roleProgress, progress: avgProgress,
+      startDate: document.getElementById('sf-start').value,
+      dueDate: document.getElementById('sf-due').value,
       tasks: [], createdAt: new Date().toISOString() });
   }
   await saveProject(proj);
@@ -1558,7 +1930,9 @@ async function init() {
   document.getElementById('theme-icon-sun').style.display = savedTheme === 'dark' ? 'block' : 'none';
   document.getElementById('theme-icon-moon').style.display = savedTheme === 'dark' ? 'none' : 'block';
   await tryRestoreFolder();
+  updateFolderUI(!!dataFolderHandle);
   await loadFromFS();
+  await loadPeopleFromFS();
   renderDashboard();
 }
 init();

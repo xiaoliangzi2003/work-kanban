@@ -729,6 +729,19 @@ body {
 .switch-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .switch-item.active { background: rgba(255,255,255,0.12); color: #fff; }
 .switch-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ======== MULTI-SELECT ======== */
+.ms-wrap { position: relative; user-select: none; }
+.ms-trigger { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; font-size: 13px; min-height: 36px; }
+.ms-trigger:focus-within { border-color: var(--accent2); }
+.ms-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); z-index: 200; max-height: 200px; overflow-y: auto; box-shadow: var(--shadow2); display: none; }
+.ms-wrap.open .ms-dropdown { display: block; }
+.ms-option { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
+.ms-option:hover { background: var(--surface2); }
+.ms-option input { width: 14px; height: 14px; cursor: pointer; accent-color: var(--accent2); }
+.ms-placeholder { color: var(--text3); }
+.ms-tags { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.ms-tag { background: var(--accent-light); color: var(--accent2); padding: 1px 8px; border-radius: 20px; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -767,6 +780,11 @@ body {
     </div>
     <div class="sidebar-footer">
       <div id="folder-status-text">数据存储于本地浏览器</div>
+      <div id="connect-folder-btn-wrap" style="display:none;margin-top:8px">
+        <button onclick="selectDataFolder()" style="width:100%;padding:6px 10px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);font-size:11px;font-family:inherit;cursor:pointer;">
+          连接文件夹
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -884,6 +902,7 @@ let formData = {};
 
 // In-memory DB (replaces getDB/saveDB for runtime)
 let db = [];
+let people = [];
 
 // File System Access API state
 let dataFolderHandle = null;
@@ -974,6 +993,7 @@ async function selectDataFolder() {
     dataFolderHandle = await getOrCreateDataSubfolder(rootHandle);
     updateFolderUI(true);
     await loadFromFS();
+    await loadPeopleFromFS();
     await seedIfEmpty();
     showToast('数据文件夹已连接', 'success');
     renderList();
@@ -987,7 +1007,7 @@ async function loadFromFS() {
   db = [];
   try {
     for await (const [name, handle] of dataFolderHandle.entries()) {
-      if (name.endsWith('.json') && handle.kind === 'file') {
+      if (name.endsWith('.json') && name !== 'people.json' && handle.kind === 'file') {
         try {
           const file = await handle.getFile();
           const text = await file.text();
@@ -1032,16 +1052,80 @@ async function deleteFromFS(rec) {
 function updateFolderUI(connected) {
   const banner = document.getElementById('folder-banner');
   const statusText = document.getElementById('folder-status-text');
+  const connectBtn = document.getElementById('connect-folder-btn-wrap');
   if (connected) {
     banner.style.display = 'none';
     statusText.textContent = '✓ JSON 文件已连接';
     statusText.style.color = 'rgba(255,255,255,0.85)';
+    if (connectBtn) connectBtn.style.display = 'none';
   } else {
-    banner.style.display = 'flex';
-    statusText.textContent = '未选择数据文件夹';
+    banner.style.display = 'none';
+    statusText.textContent = '未连接数据文件夹';
     statusText.style.color = 'rgba(255,255,255,0.5)';
+    if (connectBtn) connectBtn.style.display = 'block';
   }
 }
+
+// ======== UTILS ========
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ======== PEOPLE LOADING ========
+async function loadPeopleFromFS() {
+  if (!dataFolderHandle) { people = []; return; }
+  try {
+    const fh = await dataFolderHandle.getFileHandle('people.json', { create: false });
+    const file = await fh.getFile();
+    const text = await file.text();
+    people = JSON.parse(text);
+    if (!Array.isArray(people)) people = [];
+  } catch { people = []; }
+}
+
+// ======== MULTI-SELECT ========
+function toggleMs(wrapperId) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  const isOpen = wrap.classList.contains('open');
+  document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  if (!isOpen) wrap.classList.add('open');
+}
+function initMs(wrapperId, options, selectedVals, placeholder) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  const dropdown = document.getElementById(wrapperId + '-dropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = options.map(opt => `
+    <label class="ms-option">
+      <input type="checkbox" value="${escHtml(opt)}" ${selectedVals.includes(opt)?'checked':''} onchange="updateMsTags('${wrapperId}','${escHtml(placeholder||'请选择')}')">
+      ${escHtml(opt)}
+    </label>`).join('');
+  updateMsTags(wrapperId, placeholder || '请选择');
+}
+function updateMsTags(wrapperId, placeholder) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  const tagsEl = document.getElementById(wrapperId + '-tags');
+  if (!tagsEl) return;
+  const checked = Array.from(wrap.querySelectorAll('input[type=checkbox]:checked'));
+  if (!checked.length) {
+    tagsEl.innerHTML = `<span class="ms-placeholder">${placeholder || '请选择'}</span>`;
+  } else {
+    tagsEl.innerHTML = checked.map(cb => `<span class="ms-tag">${escHtml(cb.value)}</span>`).join('');
+  }
+}
+function getMsValues(wrapperId) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return [];
+  return Array.from(wrap.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  }
+});
 
 // ======== RECORD HELPERS ========
 async function saveRecord(rec) {
@@ -1365,7 +1449,13 @@ function buildForm() {
           </div>
           <div class="form-group">
             <label class="form-label">复盘人 <span class="req">*</span></label>
-            <input class="form-input" id="f-reviewer" placeholder="姓名或花名" value="${d.reviewer||''}">
+            <div class="ms-wrap" id="f-reviewer-ms">
+              <div class="ms-trigger" onclick="toggleMs('f-reviewer-ms')">
+                <div class="ms-tags" id="f-reviewer-ms-tags"><span class="ms-placeholder">选择复盘人</span></div>
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+              <div class="ms-dropdown" id="f-reviewer-ms-dropdown"></div>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">开始日期 <span class="req">*</span></label>
@@ -1513,6 +1603,10 @@ function buildForm() {
     </div>`
   ];
   document.getElementById('form-sections').innerHTML = sections.join('');
+  // Initialize reviewer multi-select
+  const reviewerNames = people.map(p => p.name);
+  const selectedReviewer = d.reviewer ? d.reviewer.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  initMs('f-reviewer-ms', reviewerNames, selectedReviewer, '选择复盘人');
 }
 
 function dimFormRow(field, label, placeholder, d) {
@@ -1661,9 +1755,19 @@ const FORM_FIELDS = [
 
 function collectCurrentStep() {
   FORM_FIELDS.forEach(f => {
+    if (f === 'reviewer') {
+      // handled separately via multi-select
+      return;
+    }
     const el = document.getElementById('f-' + f);
     if (el) formData[f] = el.value;
   });
+  // Collect reviewer from multi-select
+  const reviewerWrap = document.getElementById('f-reviewer-ms');
+  if (reviewerWrap) {
+    const vals = getMsValues('f-reviewer-ms');
+    formData.reviewer = vals.join(', ');
+  }
   collectGoals();
   if (!formData.actionItems) formData.actionItems = [];
 }
@@ -1680,7 +1784,13 @@ function loadFormData(id) {
 
 async function saveForm() {
   collectCurrentStep();
-  if (!formData.reviewer || !formData.reviewer.trim()) { showToast('请填写复盘人', 'error'); goToStep(0); return; }
+  // Collect reviewer one more time in case user is still on step 0
+  const reviewerWrap = document.getElementById('f-reviewer-ms');
+  if (reviewerWrap) {
+    const vals = getMsValues('f-reviewer-ms');
+    if (vals.length) formData.reviewer = vals.join(', ');
+  }
+  if (!formData.reviewer || !formData.reviewer.trim()) { showToast('请选择复盘人', 'error'); goToStep(0); return; }
   if (!formData.startDate) { showToast('请填写开始日期', 'error'); goToStep(0); return; }
   try {
     if (editingId) {
@@ -1852,6 +1962,7 @@ async function initApp() {
   updateFolderUI(!!dataFolderHandle);
   if (dataFolderHandle) {
     await loadFromFS();
+    await loadPeopleFromFS();
     await seedIfEmpty();
   }
   showView('list');
