@@ -32,6 +32,35 @@
   --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #283548;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --accent: #2563eb;
+  --accent2: #60a5fa;
+  --accent-light: #1e3252;
+  --accent-mid: rgba(96,165,250,0.2);
+  --green: #4ade80;
+  --green-bg: #052e16;
+  --amber: #fbbf24;
+  --amber-bg: #1c1400;
+  --red: #f87171;
+  --red-bg: #2d0000;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+  --shadow2: 0 8px 32px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .sidebar { background: #1e3252; }
+[data-theme="dark"] .dim-input textarea:focus { background: var(--surface2) !important; }
+[data-theme="dark"] .folder-banner { background: #1c1400; border-color: #92400e; color: #fbbf24; }
+[data-theme="dark"] .folder-banner button { background: #1e293b; color: #fbbf24; border-color: #92400e; }
+[data-theme="dark"] .folder-banner button:hover { background: #283548; }
+[data-theme="dark"] .section-header:hover { background: #1e3252 !important; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -114,6 +143,30 @@ body {
   flex-direction: column;
 }
 
+/* ======== FOLDER BANNER ======== */
+.folder-banner {
+  background: #fef3c7;
+  border-bottom: 1px solid #f59e0b;
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #92400e;
+}
+.folder-banner button {
+  padding: 4px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #f59e0b;
+  background: #fff;
+  color: #92400e;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.folder-banner button:hover { background: #fef3c7; }
+
 .topbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -152,6 +205,19 @@ body {
 }
 .btn-primary:hover { background: #163d61; border-color: #163d61; }
 .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+.theme-toggle {
+  width: 34px; height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.theme-toggle:hover { background: var(--surface2); color: var(--text); }
 
 .content { padding: 28px 32px; flex: 1; }
 
@@ -656,14 +722,27 @@ body {
         数据统计
       </div>
     </div>
-    <div class="sidebar-footer">数据存储于本地浏览器</div>
+    <div class="sidebar-footer">
+      <div id="folder-status-text">数据存储于本地浏览器</div>
+    </div>
   </nav>
 
   <div class="main">
+    <!-- Folder Banner -->
+    <div class="folder-banner" id="folder-banner" style="display:none">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+      请选择数据文件夹，复盘记录将以 JSON 文件存储在 data/ 目录下
+      <button onclick="selectDataFolder()">选择文件夹</button>
+    </div>
+
     <!-- Topbar -->
     <div class="topbar">
       <span class="topbar-title" id="topbar-title">复盘列表</span>
       <div class="topbar-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" title="切换主题" id="theme-btn">
+          <svg id="theme-icon-sun" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg id="theme-icon-moon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
         <button class="btn btn-primary" onclick="showView('new')">
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           新建复盘
@@ -751,13 +830,21 @@ body {
 <div class="toast" id="toast"></div>
 
 <script>
-const DB_KEY = 'weekly_review_data';
+const IDB_NAME = 'weekly_review_idb';
+const IDB_STORE = 'handles';
 let currentView = 'list';
 let displayMode = 'card';
 let currentStep = 0;
 let editingId = null;
 let deleteTargetId = null;
 let formData = {};
+
+// In-memory DB (replaces getDB/saveDB for runtime)
+let db = [];
+
+// File System Access API state
+let dataFolderHandle = null;
+const FSA_AVAILABLE = ('showDirectoryPicker' in window);
 
 const STEPS = [
   { id: 's0', title: '基础信息', short: '基础' },
@@ -768,12 +855,229 @@ const STEPS = [
   { id: 's5', title: '行动汇总 & 总结', short: '总结' },
 ];
 
-function getDB() {
-  try { return JSON.parse(localStorage.getItem(DB_KEY)) || []; }
-  catch { return []; }
+// ======== INDEXEDDB HELPERS ========
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
 }
-function saveDB(data) { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
 
+async function idbGet(key) {
+  try {
+    const idb = await openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = idb.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror = e => reject(e.target.error);
+    });
+  } catch { return undefined; }
+}
+
+async function idbSet(key, value) {
+  try {
+    const idb = await openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = idb.transaction(IDB_STORE, 'readwrite');
+      const req = tx.objectStore(IDB_STORE).put(value, key);
+      req.onsuccess = () => resolve();
+      req.onerror = e => reject(e.target.error);
+    });
+  } catch { /* ignore */ }
+}
+
+// ======== FILE SYSTEM ACCESS ========
+function sanitizeFilename(str) {
+  return str.replace(/[\\/:*?"<>|]/g, '_').trim();
+}
+
+async function tryRestoreFolder() {
+  if (!FSA_AVAILABLE) return;
+  try {
+    const stored = await idbGet('rootFolderHandle');
+    if (!stored) return;
+    // Check permission
+    const perm = await stored.queryPermission({ mode: 'readwrite' });
+    if (perm === 'granted') {
+      dataFolderHandle = await getOrCreateDataSubfolder(stored);
+      updateFolderUI(true);
+      return;
+    }
+    const req = await stored.requestPermission({ mode: 'readwrite' });
+    if (req === 'granted') {
+      dataFolderHandle = await getOrCreateDataSubfolder(stored);
+      updateFolderUI(true);
+    }
+  } catch { /* permission denied or handle stale */ }
+}
+
+async function getOrCreateDataSubfolder(rootHandle) {
+  return await rootHandle.getDirectoryHandle('data', { create: true });
+}
+
+async function selectDataFolder() {
+  if (!FSA_AVAILABLE) {
+    showToast('您的浏览器不支持文件系统访问 API，请使用 Chrome 或 Edge', 'error');
+    return;
+  }
+  try {
+    const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    await idbSet('rootFolderHandle', rootHandle);
+    dataFolderHandle = await getOrCreateDataSubfolder(rootHandle);
+    updateFolderUI(true);
+    await loadFromFS();
+    await seedIfEmpty();
+    showToast('数据文件夹已连接', 'success');
+    renderList();
+  } catch (e) {
+    if (e.name !== 'AbortError') showToast('选择文件夹失败：' + e.message, 'error');
+  }
+}
+
+async function loadFromFS() {
+  if (!dataFolderHandle) { db = []; return; }
+  db = [];
+  try {
+    for await (const [name, handle] of dataFolderHandle.entries()) {
+      if (name.endsWith('.json') && handle.kind === 'file') {
+        try {
+          const file = await handle.getFile();
+          const text = await file.text();
+          const rec = JSON.parse(text);
+          db.push(rec);
+        } catch { /* skip corrupted file */ }
+      }
+    }
+  } catch { /* folder read error */ }
+  db.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function getFilename(rec) {
+  return `review_${rec.id}.json`;
+}
+
+async function saveToFS(rec) {
+  if (!dataFolderHandle) {
+    showToast('请先选择数据文件夹', 'error');
+    throw new Error('未选择数据文件夹');
+  }
+  const filename = getFilename(rec);
+  try {
+    const fh = await dataFolderHandle.getFileHandle(filename, { create: true });
+    const writable = await fh.createWritable();
+    await writable.write(JSON.stringify(rec, null, 2));
+    await writable.close();
+  } catch (e) {
+    showToast('保存文件失败：' + e.message, 'error');
+    throw e;
+  }
+}
+
+async function deleteFromFS(rec) {
+  if (!dataFolderHandle) return;
+  const filename = getFilename(rec);
+  try {
+    await dataFolderHandle.removeEntry(filename);
+  } catch { /* file might not exist */ }
+}
+
+function updateFolderUI(connected) {
+  const banner = document.getElementById('folder-banner');
+  const statusText = document.getElementById('folder-status-text');
+  if (connected) {
+    banner.style.display = 'none';
+    statusText.textContent = '✓ JSON 文件已连接';
+    statusText.style.color = 'rgba(255,255,255,0.85)';
+  } else {
+    banner.style.display = 'flex';
+    statusText.textContent = '未选择数据文件夹';
+    statusText.style.color = 'rgba(255,255,255,0.5)';
+  }
+}
+
+// ======== RECORD HELPERS ========
+async function saveRecord(rec) {
+  const idx = db.findIndex(x => x.id === rec.id);
+  if (idx >= 0) db[idx] = rec; else db.push(rec);
+  await saveToFS(rec);
+}
+
+async function deleteRecord(rec) {
+  db = db.filter(x => x.id !== rec.id);
+  await deleteFromFS(rec);
+}
+
+// ======== WEEK HELPERS ========
+function getWeekOfMonth(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return 1;
+  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+  const firstDow = firstDay.getDay();
+  const daysBack = firstDow === 0 ? 6 : firstDow - 1;
+  const firstMonday = new Date(firstDay);
+  firstMonday.setDate(firstDay.getDate() - daysBack);
+  const dDow = d.getDay();
+  const dDaysBack = dDow === 0 ? 6 : dDow - 1;
+  const dMonday = new Date(d);
+  dMonday.setDate(d.getDate() - dDaysBack);
+  return Math.round((dMonday - firstMonday) / (7 * 86400000)) + 1;
+}
+
+function weekNumToChinese(n) {
+  const chars = ['一', '二', '三', '四', '五', '六'];
+  return chars[n - 1] || String(n);
+}
+
+function getWeekSunday(startStr) {
+  const d = new Date(startStr + 'T00:00:00');
+  if (isNaN(d)) return '';
+  const dow = d.getDay();
+  d.setDate(d.getDate() + (dow === 0 ? 0 : 7 - dow));
+  return d.toISOString().split('T')[0];
+}
+
+function generateTitle(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return '';
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const weekNum = getWeekOfMonth(dateStr);
+  const chinese = weekNumToChinese(weekNum);
+  return `${year}年${month}月第${chinese}周复盘`;
+}
+
+function autoFillWeekFields(dateStr) {
+  if (!dateStr) return;
+  // Auto-fill end date (Sunday of the same week)
+  const sunday = getWeekSunday(dateStr);
+  const endEl = document.getElementById('f-endDate');
+  if (endEl) endEl.value = sunday;
+
+  // Auto-calculate week label
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return;
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const weekNum = getWeekOfMonth(dateStr);
+  const chinese = weekNumToChinese(weekNum);
+  const weekLabel = `${year}年${month}月第${chinese}周`;
+
+  const weekNumEl = document.getElementById('f-weekNum');
+  if (weekNumEl) weekNumEl.value = weekLabel;
+
+  // Auto-fill title if empty
+  const titleEl = document.getElementById('f-title');
+  if (titleEl && !titleEl.value.trim()) {
+    titleEl.value = weekLabel + '复盘';
+  }
+}
+
+// ======== TOAST ========
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'toast ' + type;
@@ -781,6 +1085,7 @@ function showToast(msg, type = '') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ======== VIEW ROUTING ========
 function showView(name, id = null) {
   currentView = name;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -806,7 +1111,6 @@ function renderList() {
 }
 
 function populateYearFilter() {
-  const db = getDB();
   const years = [...new Set(db.map(r => r.year || new Date(r.createdAt).getFullYear()))].sort((a,b)=>b-a);
   const sel = document.getElementById('filter-year');
   const cur = sel.value;
@@ -814,31 +1118,34 @@ function populateYearFilter() {
 }
 
 function filterList() {
-  let db = getDB();
+  let filtered = [...db];
   const q = document.getElementById('search-input').value.toLowerCase();
   const yr = document.getElementById('filter-year').value;
   const mo = document.getElementById('filter-month').value;
-  if (q) db = db.filter(r => JSON.stringify(r).toLowerCase().includes(q));
-  if (yr) db = db.filter(r => String(r.year || new Date(r.createdAt).getFullYear()) === yr);
-  if (mo) db = db.filter(r => String(r.startMonth) === mo || String(new Date(r.createdAt).getMonth()+1) === mo);
-  db = db.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if (q) filtered = filtered.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+  if (yr) filtered = filtered.filter(r => String(r.year || new Date(r.createdAt).getFullYear()) === yr);
+  if (mo) filtered = filtered.filter(r => String(r.startMonth) === mo || String(new Date(r.createdAt).getMonth()+1) === mo);
+  filtered = filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   const container = document.getElementById('list-container');
-  if (db.length === 0) {
+  if (filtered.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>暂无复盘记录</h3><p>点击右上角「新建复盘」开始你的第一份周复盘</p><button class="btn btn-primary" onclick="showView('new')">新建复盘</button></div>`;
     return;
   }
-  if (displayMode === 'card') renderCards(db, container);
-  else renderTimeline(db, container);
+  if (displayMode === 'card') renderCards(filtered, container);
+  else renderTimeline(filtered, container);
 }
 
-function renderCards(db, container) {
-  container.innerHTML = `<div class="card-grid">${db.map(r => cardHTML(r)).join('')}</div>`;
+function renderCards(data, container) {
+  container.innerHTML = `<div class="card-grid">${data.map(r => cardHTML(r)).join('')}</div>`;
 }
 
 function cardHTML(r) {
   const preview = r.dim1_highlight || r.weekSummary || '（无内容摘要）';
+  // weekNum display: if contains Chinese chars, show as-is; otherwise wrap with 第 X 周
+  const wn = r.weekNum || '';
+  const weekDisplay = wn ? (/[\u4e00-\u9fa5]/.test(wn) ? wn : `第 ${wn} 周`) : '—';
   return `<div class="review-card" onclick="showView('detail','${r.id}')">
-    <div class="card-week">第 ${r.weekNum || '—'} 周</div>
+    <div class="card-week">${weekDisplay}</div>
     <div class="card-title">${r.title || `${r.startYear || ''}年${r.startMonth || ''}月复盘`}</div>
     <div class="card-date">${formatDate(r.startDate)} — ${formatDate(r.endDate)}</div>
     <div class="card-tags">
@@ -854,16 +1161,17 @@ function cardHTML(r) {
   </div>`;
 }
 
-function renderTimeline(db, container) {
-  const items = db.map(r => {
+function renderTimeline(data, container) {
+  const items = data.map(r => {
     const mo = r.startMonth || (r.startDate ? new Date(r.startDate).getMonth()+1 : '?');
-    const wk = r.weekNum || '?';
+    const wn = r.weekNum || '';
+    const weekDisplay = wn ? (/[\u4e00-\u9fa5]/.test(wn) ? wn : `第 ${wn} 周`) : '—';
     return `<div class="timeline-item">
-      <div class="timeline-dot">${mo}/${wk}</div>
+      <div class="timeline-dot">${mo}月</div>
       <div class="timeline-card" onclick="showView('detail','${r.id}')">
         <div class="tl-header">
           <div>
-            <div class="card-week" style="margin-bottom:3px">第 ${wk} 周</div>
+            <div class="card-week" style="margin-bottom:3px">${weekDisplay}</div>
             <div class="tl-title">${r.title || `${r.startYear||''}年${mo}月复盘`}</div>
           </div>
           <div class="tl-meta">${formatDate(r.startDate)}<br>${r.reviewer||''}</div>
@@ -888,16 +1196,17 @@ function setDisplayMode(mode) {
 
 // ======== DETAIL VIEW ========
 function renderDetail(id) {
-  const db = getDB();
   const r = db.find(x => x.id === id);
   if (!r) { showView('list'); return; }
+  const wn = r.weekNum || '';
+  const weekDisplay = wn ? (/[\u4e00-\u9fa5]/.test(wn) ? wn : `第 ${wn} 周`) : '—';
   const html = `
     <div class="detail-header">
       <div class="detail-back" onclick="showView('list')">
         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         返回列表
       </div>
-      <div class="detail-week-label">第 ${r.weekNum||'—'} 周</div>
+      <div class="detail-week-label">${weekDisplay}</div>
       <div class="detail-title">${r.title || `${r.startYear||''}年${r.startMonth||''}月工作复盘`}</div>
       <div class="detail-date">${formatDate(r.startDate)} — ${formatDate(r.endDate)}</div>
       <div class="detail-meta">
@@ -957,8 +1266,10 @@ function toggleSection(idx) {
   icon.classList.toggle('open');
 }
 function infoTable(r) {
+  const wn = r.weekNum || '—';
+  const weekDisplay = /[\u4e00-\u9fa5]/.test(wn) ? wn : `第${wn}周`;
   return `<table class="detail-table">
-    <tr><td>复盘周期</td><td>${formatDate(r.startDate)} — ${formatDate(r.endDate)}（第${r.weekNum||'—'}周）</td></tr>
+    <tr><td>复盘周期</td><td>${formatDate(r.startDate)} — ${formatDate(r.endDate)}（${weekDisplay}）</td></tr>
     <tr><td>复盘人</td><td>${r.reviewer||'—'}</td></tr>
     <tr><td>参与人员</td><td>${r.participants||'—'}</td></tr>
     <tr><td>完成时间</td><td>${r.reviewDate||'—'}</td></tr>
@@ -980,13 +1291,15 @@ function actionTableHTML(items) {
   </table>`;
 }
 function summaryHTML(r) {
+  const goals = getNextGoals(r).filter(g => g && g.trim());
+  const goalRows = goals.length
+    ? goals.map((g, i) => `<tr><td>下周目标${i+1}</td><td>${g}</td></tr>`).join('')
+    : `<tr><td>下周目标</td><td>（未填写）</td></tr>`;
   return `<table class="detail-table">
     <tr><td>经验沉淀</td><td>${r.summary_exp||'（未填写）'}</td></tr>
     <tr><td>需规避问题</td><td>${r.summary_avoid||'（未填写）'}</td></tr>
     <tr><td>可复用方法</td><td>${r.summary_reuse||'（未填写）'}</td></tr>
-    <tr><td>下周目标1</td><td>${r.next_goal1||'（未填写）'}</td></tr>
-    <tr><td>下周目标2</td><td>${r.next_goal2||'（未填写）'}</td></tr>
-    <tr><td>下周目标3</td><td>${r.next_goal3||'（未填写）'}</td></tr>
+    ${goalRows}
     <tr><td>需停止的行为</td><td>${r.stop_behavior||'—'}</td></tr>
     <tr><td>备注</td><td>${r.notes||'—'}</td></tr>
   </table>`;
@@ -1013,15 +1326,15 @@ function buildForm() {
           </div>
           <div class="form-group">
             <label class="form-label">开始日期 <span class="req">*</span></label>
-            <input class="form-input" type="date" id="f-startDate" value="${d.startDate||''}">
+            <input class="form-input" type="date" id="f-startDate" value="${d.startDate||''}" oninput="autoFillWeekFields(this.value)">
           </div>
           <div class="form-group">
             <label class="form-label">结束日期 <span class="req">*</span></label>
             <input class="form-input" type="date" id="f-endDate" value="${d.endDate||''}">
           </div>
           <div class="form-group">
-            <label class="form-label">第几周</label>
-            <input class="form-input" id="f-weekNum" placeholder="如：12" value="${d.weekNum||''}">
+            <label class="form-label">复盘周次</label>
+            <input class="form-input" id="f-weekNum" placeholder="如：2026年3月第三周" value="${d.weekNum||''}">
           </div>
           <div class="form-group">
             <label class="form-label">复盘完成日期</label>
@@ -1137,10 +1450,12 @@ function buildForm() {
             <textarea class="form-textarea" id="f-summary_reuse" placeholder="可以推广使用的工作方法">${d.summary_reuse||''}</textarea>
           </div>
           <div class="form-group full">
-            <label class="form-label">下周核心目标（最多3个）</label>
-            <input class="form-input" id="f-next_goal1" placeholder="目标1" value="${d.next_goal1||''}" style="margin-bottom:8px">
-            <input class="form-input" id="f-next_goal2" placeholder="目标2" value="${d.next_goal2||''}" style="margin-bottom:8px">
-            <input class="form-input" id="f-next_goal3" placeholder="目标3" value="${d.next_goal3||''}">
+            <label class="form-label">下周核心目标</label>
+            <div id="next-goals-container">${buildGoalRows(getNextGoals(d))}</div>
+            <button class="btn btn-sm" onclick="addNextGoal()" style="margin-top:8px">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              添加目标
+            </button>
           </div>
           <div class="form-group">
             <label class="form-label">下周需停止的行为</label>
@@ -1201,6 +1516,48 @@ function updateAction(i, field, val) {
   formData.actionItems[i][field] = val;
 }
 
+// ---- Next Goals ----
+function getNextGoals(d) {
+  if (d.nextGoals && d.nextGoals.length) return [...d.nextGoals];
+  // backward compat with old format
+  const goals = [];
+  if (d.next_goal1) goals.push(d.next_goal1);
+  if (d.next_goal2) goals.push(d.next_goal2);
+  if (d.next_goal3) goals.push(d.next_goal3);
+  return goals.length ? goals : ['', '', ''];
+}
+function buildGoalRows(goals) {
+  return goals.map((g, i) => `<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center" id="goal-row-${i}">
+    <span style="font-size:12px;color:var(--text3);min-width:18px;text-align:right">${i+1}.</span>
+    <input class="form-input" style="flex:1" placeholder="目标${i+1}" value="${g.replace(/"/g,'&quot;')}" oninput="updateGoal(${i},this.value)">
+    ${goals.length > 1 ? `<button class="btn btn-sm" style="padding:5px 8px;color:var(--text3)" onclick="removeNextGoal(${i})" title="删除">
+      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>` : ''}
+  </div>`).join('');
+}
+function addNextGoal() {
+  collectGoals();
+  if (!formData.nextGoals) formData.nextGoals = ['', '', ''];
+  formData.nextGoals.push('');
+  document.getElementById('next-goals-container').innerHTML = buildGoalRows(formData.nextGoals);
+}
+function removeNextGoal(i) {
+  collectGoals();
+  if (!formData.nextGoals || formData.nextGoals.length <= 1) return;
+  formData.nextGoals.splice(i, 1);
+  document.getElementById('next-goals-container').innerHTML = buildGoalRows(formData.nextGoals);
+}
+function updateGoal(i, val) {
+  if (!formData.nextGoals) formData.nextGoals = [];
+  formData.nextGoals[i] = val;
+}
+function collectGoals() {
+  const container = document.getElementById('next-goals-container');
+  if (!container) return;
+  const inputs = container.querySelectorAll('input');
+  formData.nextGoals = Array.from(inputs).map(el => el.value);
+}
+
 function renderProgress() {
   const html = STEPS.map((s, i) => {
     const done = i < currentStep;
@@ -1256,7 +1613,7 @@ const FORM_FIELDS = [
   'dim3_priority','dim3_risk','dim3_root','dim3_action',
   'dim4_issue','dim4_direction','dim4_action',
   'summary_exp','summary_avoid','summary_reuse',
-  'next_goal1','next_goal2','next_goal3','stop_behavior','notes'
+  'stop_behavior','notes'
 ];
 
 function collectCurrentStep() {
@@ -1264,40 +1621,44 @@ function collectCurrentStep() {
     const el = document.getElementById('f-' + f);
     if (el) formData[f] = el.value;
   });
+  collectGoals();
   if (!formData.actionItems) formData.actionItems = [];
 }
 
 function loadFormData(id) {
-  const db = getDB();
   const r = db.find(x => x.id === id);
-  if (r) formData = { ...r };
+  if (!r) return;
+  formData = { ...r };
+  // normalize goals
+  if (!formData.nextGoals || !formData.nextGoals.length) {
+    formData.nextGoals = getNextGoals(formData);
+  }
 }
 
-function saveForm() {
+async function saveForm() {
   collectCurrentStep();
   if (!formData.reviewer || !formData.reviewer.trim()) { showToast('请填写复盘人', 'error'); goToStep(0); return; }
   if (!formData.startDate) { showToast('请填写开始日期', 'error'); goToStep(0); return; }
-  const db = getDB();
-  if (editingId) {
-    const idx = db.findIndex(x => x.id === editingId);
-    if (idx >= 0) {
-      db[idx] = { ...formData, id: editingId, updatedAt: new Date().toISOString() };
+  try {
+    if (editingId) {
+      const updated = { ...formData, id: editingId, updatedAt: new Date().toISOString() };
+      await saveRecord(updated);
+      showToast('复盘已更新', 'success');
+    } else {
+      const rec = { ...formData, id: Date.now().toString(), createdAt: new Date().toISOString() };
+      if (rec.startDate) { const d = new Date(rec.startDate); rec.startYear = d.getFullYear(); rec.startMonth = d.getMonth()+1; }
+      await saveRecord(rec);
+      showToast('复盘已保存', 'success');
     }
-    showToast('复盘已更新', 'success');
-  } else {
-    const rec = { ...formData, id: Date.now().toString(), createdAt: new Date().toISOString() };
-    if (rec.startDate) { const d = new Date(rec.startDate); rec.startYear = d.getFullYear(); rec.startMonth = d.getMonth()+1; }
-    db.push(rec);
-    showToast('复盘已保存', 'success');
+    formData = {}; editingId = null;
+    setTimeout(() => showView('list'), 800);
+  } catch (e) {
+    showToast('保存失败：' + e.message, 'error');
   }
-  saveDB(db);
-  formData = {}; editingId = null;
-  setTimeout(() => showView('list'), 800);
 }
 
 // ======== STATS ========
 function renderStats() {
-  const db = getDB();
   const total = db.length;
   const thisYear = db.filter(r => new Date(r.createdAt).getFullYear() === new Date().getFullYear()).length;
   const withActions = db.filter(r => r.actionItems && r.actionItems.length > 0).length;
@@ -1352,15 +1713,19 @@ function closeModal() {
   deleteTargetId = null;
   document.getElementById('delete-modal').classList.remove('open');
 }
-function confirmDelete() {
+async function confirmDelete() {
   if (!deleteTargetId) return;
-  let db = getDB();
-  db = db.filter(x => x.id !== deleteTargetId);
-  saveDB(db);
-  closeModal();
-  showToast('已删除', 'success');
-  if (currentView === 'list') filterList();
-  else showView('list');
+  const rec = db.find(x => x.id === deleteTargetId);
+  if (!rec) { closeModal(); return; }
+  try {
+    await deleteRecord(rec);
+    closeModal();
+    showToast('已删除', 'success');
+    if (currentView === 'list') filterList();
+    else showView('list');
+  } catch (e) {
+    showToast('删除失败：' + e.message, 'error');
+  }
 }
 
 function formatDate(str) {
@@ -1376,8 +1741,8 @@ document.getElementById('delete-modal').addEventListener('click', function(e) {
 });
 
 // ======== SEED DATA ========
-function seedIfEmpty() {
-  if (getDB().length > 0) return;
+async function seedIfEmpty() {
+  if (db.length > 0) return;
   const samples = [
     {
       id: '1700000000001', title: '2024年第45周复盘', reviewer: '张明', weekNum: '45',
@@ -1406,18 +1771,50 @@ function seedIfEmpty() {
       summary_exp: '「需求对接后立即输出文字纪要」这个方法本周验证有效，下周继续执行',
       summary_avoid: '沟通时信息遗漏；低优先级任务占用核心时间',
       summary_reuse: '每日17:30同步机制；代码评审前自查checklist',
-      next_goal1: '完成上线前所有测试用例覆盖',
-      next_goal2: '建立5个常用代码片段，配置完成',
-      next_goal3: '输出本周技术学习笔记1篇',
+      nextGoals: ['完成上线前所有测试用例覆盖', '建立5个常用代码片段，配置完成', '输出本周技术学习笔记1篇'],
       notes: '',
       createdAt: '2024-11-08T17:30:00.000Z'
     }
   ];
-  saveDB(samples);
+  for (const s of samples) {
+    await saveRecord(s);
+  }
 }
 
-seedIfEmpty();
-showView('list');
+// ======== THEME ========
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+}
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('theme-icon-sun').style.display = '';
+    document.getElementById('theme-icon-moon').style.display = 'none';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('theme-icon-sun').style.display = 'none';
+    document.getElementById('theme-icon-moon').style.display = '';
+  }
+}
+
+// ======== APP INIT ========
+async function initApp() {
+  // Apply saved theme
+  applyTheme(localStorage.getItem('theme') || 'light');
+  // Try to restore folder connection
+  await tryRestoreFolder();
+  updateFolderUI(!!dataFolderHandle);
+  if (dataFolderHandle) {
+    await loadFromFS();
+    await seedIfEmpty();
+  }
+  showView('list');
+}
+
+initApp();
 </script>
 </body>
 </html>
