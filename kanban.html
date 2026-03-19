@@ -315,6 +315,33 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
 /* ======== SECTION HEADER ======== */
 .section-actions { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .section-title { font-size: 15px; font-weight: 500; }
+
+/* ======== TASK IMAGES ======== */
+.task-images-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.task-img-item { position: relative; }
+.task-img-thumb { width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--border); transition: var(--transition); display: block; }
+.task-img-thumb:hover { border-color: var(--accent-mid); }
+.task-img-remove { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.55); border: none; border-radius: 50%; color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+
+/* ======== LIGHTBOX ======== */
+.lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 600; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+.lightbox-overlay.open { display: flex; }
+.lightbox-overlay img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: var(--radius); pointer-events: none; }
+
+/* ======== COLUMN PAGINATION ======== */
+.col-pagination { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.col-pg-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+.col-pg-btn:hover:not(:disabled) { background: var(--surface); color: var(--text); }
+.col-pg-btn:disabled { opacity: 0.35; cursor: default; }
+.col-pg-info { font-size: 11px; color: var(--text3); min-width: 36px; text-align: center; }
+
+/* ======== TASK DETAIL ======== */
+.td-meta-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+.td-meta-item .td-meta-label { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+.td-meta-item .td-meta-value { font-size: 13px; font-weight: 500; }
+.td-section-label { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; margin: 14px 0 6px; }
+.td-description { font-size: 13px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
+.td-comment { font-size: 13px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; background: var(--accent-light); border-radius: var(--radius-sm); padding: 10px 12px; border-left: 3px solid var(--accent-mid); }
 </style>
 </head>
 <body>
@@ -812,11 +839,47 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <textarea class="form-control" id="tf-desc" placeholder="任务详细说明"></textarea>
       </div>
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">相关图片（最多5张，每张不超过2MB）</label>
+        <input type="file" id="tf-images-input" accept="image/*" multiple style="font-size:13px;color:var(--text2)" onchange="handleImageSelect(event)">
+        <div class="task-images-wrap" id="tf-images-preview"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">解决步骤 / 评论</label>
+        <textarea class="form-control" id="tf-comment" placeholder="记录解决方案、处理步骤或其他备注..." style="min-height:80px"></textarea>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('task-modal')">取消</button>
       <button class="btn btn-primary" onclick="saveTaskForm()">保存</button>
     </div>
   </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div class="modal-overlay" id="task-detail-modal">
+  <div class="modal modal-lg">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px">
+      <h3 id="td-title" style="flex:1;line-height:1.4"></h3>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-sm btn-primary" onclick="openTaskEditFromDetail()">编辑</button>
+        <button class="btn btn-sm" onclick="closeModal('task-detail-modal')">关闭</button>
+      </div>
+    </div>
+    <div id="td-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
+    <div class="td-meta-grid" id="td-meta"></div>
+    <div id="td-desc-section"></div>
+    <div id="td-images-section"></div>
+    <div id="td-comment-section"></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
 </div>
 
 <!-- People Form Modal -->
@@ -891,6 +954,13 @@ let taskFormStatus = 'todo';
 let pendingConfirmFn = null;
 let peopleCurrentPage = 1;
 const PEOPLE_PER_PAGE = 10;
+const TASKS_PER_PAGE = 6;
+let boardPages = { todo:1, doing:1, review:1, done:1 };
+let detailPages = { todo:1, doing:1, review:1, done:1 };
+let viewingTaskProjectId = null;
+let viewingTaskId = null;
+// Images state for task form
+let taskEditImages = []; // [{src:'existing'|'new', file:File, previewUrl:string}]
 
 const FSA_AVAILABLE = ('showDirectoryPicker' in window);
 
@@ -1043,6 +1113,89 @@ async function savePeopleToFS() {
   } catch (e) { showToast('保存人员数据失败：' + e.message, 'error'); }
 }
 
+// ======== TASK IMAGE HELPERS ========
+async function loadTaskImagesForEdit(taskId, imageCount) {
+  taskEditImages.forEach(img => { try { URL.revokeObjectURL(img.previewUrl); } catch {} });
+  taskEditImages = [];
+  if (!taskId || !imageCount || !dataRootHandle) return;
+  for (let i = 1; i <= imageCount; i++) {
+    try {
+      const fh = await dataRootHandle.getFileHandle(`${taskId}_${i}.jpg`);
+      const file = await fh.getFile();
+      const url = URL.createObjectURL(file);
+      taskEditImages.push({ src: 'existing', file, previewUrl: url });
+    } catch {}
+  }
+}
+async function saveTaskImages(taskId, oldImageCount) {
+  if (!dataRootHandle) return 0;
+  // Delete all old images
+  for (let i = 1; i <= (oldImageCount || 0); i++) {
+    try { await dataRootHandle.removeEntry(`${taskId}_${i}.jpg`); } catch {}
+  }
+  // Write current images sequentially
+  let count = 0;
+  for (let i = 0; i < taskEditImages.length; i++) {
+    try {
+      const fh = await dataRootHandle.getFileHandle(`${taskId}_${i+1}.jpg`, { create: true });
+      const writable = await fh.createWritable();
+      await writable.write(taskEditImages[i].file);
+      await writable.close();
+      count++;
+    } catch {}
+  }
+  return count;
+}
+async function loadTaskImagesForDisplay(taskId, imageCount) {
+  const urls = [];
+  if (!taskId || !imageCount || !dataRootHandle) return urls;
+  for (let i = 1; i <= imageCount; i++) {
+    try {
+      const fh = await dataRootHandle.getFileHandle(`${taskId}_${i}.jpg`);
+      const file = await fh.getFile();
+      urls.push(URL.createObjectURL(file));
+    } catch {}
+  }
+  return urls;
+}
+function handleImageSelect(e) {
+  const files = Array.from(e.target.files);
+  const remaining = 5 - taskEditImages.length;
+  if (remaining <= 0) { showToast('最多上传5张图片', 'error'); e.target.value = ''; return; }
+  let added = 0;
+  for (const file of files) {
+    if (taskEditImages.length >= 5) { showToast('最多上传5张图片', 'error'); break; }
+    if (file.size > 2 * 1024 * 1024) { showToast(`图片 ${file.name} 超过2MB限制`, 'error'); continue; }
+    const url = URL.createObjectURL(file);
+    taskEditImages.push({ src: 'new', file, previewUrl: url });
+    added++;
+  }
+  e.target.value = '';
+  renderTaskImagesPreview();
+}
+function renderTaskImagesPreview() {
+  const el = document.getElementById('tf-images-preview');
+  if (!el) return;
+  el.innerHTML = taskEditImages.map((img, idx) => `
+    <div class="task-img-item">
+      <img class="task-img-thumb" src="${img.previewUrl}" onclick="openLightbox('${img.previewUrl}')">
+      <button class="task-img-remove" onclick="removeTaskImage(${idx})" title="删除">×</button>
+    </div>`).join('');
+}
+function removeTaskImage(idx) {
+  try { URL.revokeObjectURL(taskEditImages[idx].previewUrl); } catch {}
+  taskEditImages.splice(idx, 1);
+  renderTaskImagesPreview();
+}
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightbox-img').src = '';
+}
+
 // ======== MULTI-SELECT ========
 function toggleMs(wrapperId) {
   const wrap = document.getElementById(wrapperId);
@@ -1135,6 +1288,7 @@ function isOverdue(dueDateStr) {
 // ======== VIEW NAVIGATION ========
 function showView(view) {
   if (view !== 'detail') currentProjectId = null;
+  if (view === 'board') boardPages = { todo:1, doing:1, review:1, done:1 };
   currentView = view;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1161,6 +1315,7 @@ function showView(view) {
 function showDetail(projectId) {
   currentProjectId = projectId;
   currentView = 'detail';
+  detailPages = { todo:1, doing:1, review:1, done:1 };
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-detail').classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1456,18 +1611,40 @@ function renderTasksTab(proj) {
     ...(proj.tasks || []).map(t => ({...t, _spName: null})),
     ...(proj.subProjects || []).flatMap(sp => (sp.tasks||[]).map(t => ({...t, _spName: sp.name, _spId: sp.id})))
   ];
+  const colNames = { todo:'待办', doing:'进行中', review:'待验证', done:'已完成' };
   const cols = TASK_COLS.map(status => {
     const colTasks = allTasks.filter(t => t.status === status);
-    const cards = colTasks.map(t => taskCardHtml(t, proj.id, true)).join('');
-    const colNames = { todo:'待办', doing:'进行中', review:'待验证', done:'已完成' };
+    const total = colTasks.length;
+    const totalPages = Math.max(1, Math.ceil(total / TASKS_PER_PAGE));
+    if (detailPages[status] > totalPages) detailPages[status] = totalPages;
+    const page = detailPages[status];
+    const paginated = colTasks.slice((page-1)*TASKS_PER_PAGE, page*TASKS_PER_PAGE);
+    const cards = paginated.map(t => taskCardHtml(t, proj.id, true)).join('');
+    const paginationHtml = totalPages > 1 ? `
+      <div class="col-pagination">
+        <button class="col-pg-btn" onclick="setColPage('detail','${status}',${page-1})" ${page<=1?'disabled':''}>‹</button>
+        <span class="col-pg-info">${page}/${totalPages}</span>
+        <button class="col-pg-btn" onclick="setColPage('detail','${status}',${page+1})" ${page>=totalPages?'disabled':''}>›</button>
+      </div>` : '';
     return `
       <div class="kanban-col" id="detail-col-${status}" ondragover="dragOver(event,'${status}','${proj.id}')" ondrop="drop(event,'${status}','${proj.id}')" ondragleave="dragLeave(event)">
-        <div class="kanban-col-header">${colNames[status]}<span class="kanban-col-count">${colTasks.length}</span></div>
+        <div class="kanban-col-header">${colNames[status]}<span class="kanban-col-count">${total}</span></div>
         ${cards}
+        ${paginationHtml}
         <button class="add-task-btn" onclick="openTaskForm('${proj.id}', null, '${status}')">+ 新增任务</button>
       </div>`;
   }).join('');
   return `<div class="board" style="grid-template-columns:repeat(4,1fr)">${cols}</div>`;
+}
+
+function setColPage(colType, status, page) {
+  if (colType === 'board') {
+    boardPages[status] = page;
+    renderBoard();
+  } else {
+    detailPages[status] = page;
+    if (currentProjectId) renderDetail(currentProjectId);
+  }
 }
 
 // ======== BOARD VIEW ========
@@ -1486,11 +1663,23 @@ function renderBoard() {
   const cols = TASK_COLS.map(status => {
     const colTasks = allTasks.filter(t => t.status === status);
     const colNames = { todo:'待办', doing:'进行中', review:'待验证', done:'已完成' };
-    const cards = colTasks.map(t => taskCardHtml(t, t._projectId, false)).join('');
+    const total = colTasks.length;
+    const totalPages = Math.max(1, Math.ceil(total / TASKS_PER_PAGE));
+    if (boardPages[status] > totalPages) boardPages[status] = totalPages;
+    const page = boardPages[status];
+    const paginated = colTasks.slice((page-1)*TASKS_PER_PAGE, page*TASKS_PER_PAGE);
+    const cards = paginated.map(t => taskCardHtml(t, t._projectId, false)).join('');
+    const paginationHtml = totalPages > 1 ? `
+      <div class="col-pagination">
+        <button class="col-pg-btn" onclick="setColPage('board','${status}',${page-1})" ${page<=1?'disabled':''}>‹</button>
+        <span class="col-pg-info">${page}/${totalPages}</span>
+        <button class="col-pg-btn" onclick="setColPage('board','${status}',${page+1})" ${page>=totalPages?'disabled':''}>›</button>
+      </div>` : '';
     return `
       <div class="kanban-col" id="board-col-${status}" ondragover="dragOver(event,'${status}',null)" ondrop="drop(event,'${status}',null)" ondragleave="dragLeave(event)">
-        <div class="kanban-col-header">${colNames[status]}<span class="kanban-col-count">${colTasks.length}</span></div>
+        <div class="kanban-col-header">${colNames[status]}<span class="kanban-col-count">${total}</span></div>
         ${cards}
+        ${paginationHtml}
         <button class="add-task-btn" onclick="openTaskForm(null, null, '${status}')">+ 新增任务</button>
       </div>`;
   }).join('');
@@ -1509,7 +1698,7 @@ function taskCardHtml(t, projectId, showSp) {
   return `
     <div class="task-card" draggable="true" id="task-${t.id}"
       ondragstart="dragStart(event,'${t.id}','${projectId || t._projectId}')"
-      onclick="openTaskForm('${projectId || t._projectId}', '${t.id}', '${t.status}')">
+      onclick="openTaskDetail('${projectId || t._projectId}', '${t.id}')">
       <div class="task-card-title">${escHtml(t.title)}</div>
       <div class="task-card-meta">
         ${typeBadge}
@@ -1559,6 +1748,49 @@ async function updateTaskStatus(projectId, taskId, newStatus) {
     }
   }
   if (found) await saveProject(proj);
+}
+
+// ======== TASK DETAIL MODAL ========
+async function openTaskDetail(projectId, taskId) {
+  viewingTaskProjectId = projectId;
+  viewingTaskId = taskId;
+  const proj = getProject(projectId);
+  if (!proj) return;
+  const task = (proj.tasks||[]).find(t=>t.id===taskId) || proj.subProjects?.flatMap(sp=>sp.tasks||[]).find(t=>t.id===taskId);
+  if (!task) return;
+  const spName = task.subProjectId ? (proj.subProjects||[]).find(s=>s.id===task.subProjectId)?.name : null;
+  const typeLabel = TASK_TYPE_LABELS[task.taskType] || '—';
+  const typeColors = task.taskType && TASK_TYPE_COLORS[task.taskType] ? TASK_TYPE_COLORS[task.taskType].split(':') : null;
+  const assigneeNames = (task.assignees||[]).map(id=>getPersonName(id)).filter(Boolean);
+  const dueCls = task.dueDate && isOverdue(task.dueDate) && task.status!=='done' ? 'color:var(--red)' : '';
+  document.getElementById('td-title').textContent = task.title;
+  document.getElementById('td-badges').innerHTML = `
+    <span class="badge badge-status-${task.status}">${TASK_STATUS_LABELS[task.status]||task.status}</span>
+    <span class="badge badge-priority-${task.priority}">${PRIORITY_LABELS[task.priority]||''}</span>
+    ${typeLabel ? `<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:${typeColors?typeColors[0]:'var(--surface2)'};color:${typeColors?typeColors[1]:'var(--text3)'}">${typeLabel}</span>` : ''}`;
+  document.getElementById('td-meta').innerHTML = `
+    <div class="td-meta-item"><div class="td-meta-label">截止日期</div><div class="td-meta-value" style="${dueCls}">${task.dueDate||'—'}</div></div>
+    <div class="td-meta-item"><div class="td-meta-label">负责人</div><div class="td-meta-value">${escHtml(assigneeNames.join('、')||'—')}</div></div>
+    <div class="td-meta-item"><div class="td-meta-label">所属</div><div class="td-meta-value">${escHtml(spName ? proj.name+' / '+spName : proj.name)}</div></div>`;
+  document.getElementById('td-desc-section').innerHTML = task.description
+    ? `<div class="td-section-label">描述</div><div class="td-description">${escHtml(task.description)}</div>` : '';
+  document.getElementById('td-images-section').innerHTML = '';
+  document.getElementById('td-comment-section').innerHTML = task.comment
+    ? `<div class="td-section-label">解决步骤 / 评论</div><div class="td-comment">${escHtml(task.comment)}</div>` : '';
+  openModal('task-detail-modal');
+  // Async load images
+  if (task.imageCount > 0) {
+    const urls = await loadTaskImagesForDisplay(task.id, task.imageCount);
+    if (urls.length) {
+      document.getElementById('td-images-section').innerHTML = `
+        <div class="td-section-label">相关图片</div>
+        <div class="task-images-wrap">${urls.map(url=>`<div class="task-img-item"><img class="task-img-thumb" src="${url}" onclick="openLightbox('${url}')"></div>`).join('')}</div>`;
+    }
+  }
+}
+function openTaskEditFromDetail() {
+  closeModal('task-detail-modal');
+  openTaskForm(viewingTaskProjectId, viewingTaskId, null);
 }
 
 // ======== RISKS VIEW (global) ========
@@ -1829,7 +2061,7 @@ async function saveRiskForm() {
 }
 
 // ======== TASK FORM ========
-function openTaskForm(projectId, taskId, defaultStatus) {
+async function openTaskForm(projectId, taskId, defaultStatus) {
   taskFormProjectId = projectId;
   editingTaskId = taskId;
   taskFormStatus = defaultStatus || 'todo';
@@ -1850,13 +2082,18 @@ function openTaskForm(projectId, taskId, defaultStatus) {
   document.getElementById('tf-title').value = task?.title || '';
   document.getElementById('tf-priority').value = task?.priority || 'medium';
   document.getElementById('tf-status').value = task?.status || defaultStatus || 'todo';
-  document.getElementById('tf-due').value = task?.dueDate || '';
+  // Requirement 6: default due date to today when creating a new task
+  document.getElementById('tf-due').value = task?.dueDate || (task ? '' : new Date().toISOString().slice(0,10));
   document.getElementById('tf-desc').value = task?.description || '';
   document.getElementById('tf-type').value = task?.taskType || 'feature';
+  document.getElementById('tf-comment').value = task?.comment || '';
   initMs('tf-assignees-ms', people.map(p => ({ id: p.id, name: p.name })), task?.assignees || [], '选择负责人');
   if (task?.subProjectId) {
     updateSubProjectOptions(projectId, task.subProjectId);
   }
+  // Load existing images
+  await loadTaskImagesForEdit(task?.id, task?.imageCount || 0);
+  renderTaskImagesPreview();
   openModal('task-modal');
 }
 function updateSubProjectOptions(projectId, selectedSpId) {
@@ -1871,13 +2108,24 @@ async function saveTaskForm() {
   const spId = document.getElementById('tf-subproject').value || null;
   const proj = getProject(projId);
   if (!proj) { showToast('请选择项目', 'error'); return; }
-  const taskData = { id: editingTaskId || genId(), title,
+  const taskId = editingTaskId || genId();
+  // Get old imageCount for cleanup
+  let oldImageCount = 0;
+  if (editingTaskId) {
+    const oldTask = (proj?.tasks||[]).find(t=>t.id===editingTaskId) || proj?.subProjects?.flatMap(sp=>sp.tasks||[]).find(t=>t.id===editingTaskId);
+    oldImageCount = oldTask?.imageCount || 0;
+  }
+  // Save images to file system
+  const imageCount = await saveTaskImages(taskId, oldImageCount);
+  const taskData = { id: taskId, title,
     priority: document.getElementById('tf-priority').value,
     status: document.getElementById('tf-status').value,
     dueDate: document.getElementById('tf-due').value,
     description: document.getElementById('tf-desc').value.trim(),
     taskType: document.getElementById('tf-type').value,
     assignees: getMsValues('tf-assignees-ms'),
+    comment: document.getElementById('tf-comment').value.trim(),
+    imageCount,
     subProjectId: spId, projectId: projId };
   // If editing, remove from old location first
   if (editingTaskId) {
