@@ -61,6 +61,7 @@
 [data-theme="dark"] .mini-cal-day.today { background: var(--accent); color: #fff; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 body {
   font-family: 'Noto Sans SC', sans-serif;
   background: var(--bg);
@@ -68,7 +69,17 @@ body {
   min-height: 100vh;
   font-size: 14px;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ======== CUSTOM SCROLLBAR ======== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
 /* ======== LAYOUT ======== */
 .app { display: flex; min-height: 100vh; }
@@ -88,28 +99,39 @@ body {
 .sidebar-logo h1 { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; letter-spacing: 0.3px; line-height: 1.3; color: #fff; }
 .sidebar-logo p { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; letter-spacing: 0.8px; text-transform: uppercase; }
 .sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 24px; cursor: pointer; color: rgba(255,255,255,0.65); font-size: 13.5px; transition: var(--transition); border-left: 3px solid transparent; }
-.nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 24px;
+  cursor: pointer; color: rgba(255,255,255,0.65); font-size: 13.5px;
+  transition: color 0.2s, background 0.2s, border-left-color 0.2s, padding-left 0.2s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); padding-left: 28px; }
 .nav-item.active { color: #fff; background: rgba(255,255,255,0.12); border-left-color: rgba(255,255,255,0.7); }
-.nav-icon { width: 18px; height: 18px; opacity: 0.9; flex-shrink: 0; }
+.nav-icon { width: 18px; height: 18px; opacity: 0.9; flex-shrink: 0; transition: transform 0.2s; }
+.nav-item:hover .nav-icon { transform: scale(1.1); }
 .sidebar-switch { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; flex-direction: column; gap: 4px; }
 .switch-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.8px; text-transform: uppercase; padding: 0 8px; margin-bottom: 2px; }
-.switch-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--radius-sm); font-size: 12.5px; color: rgba(255,255,255,0.55); text-decoration: none; transition: var(--transition); cursor: pointer; }
+.switch-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--radius-sm); font-size: 12.5px; color: rgba(255,255,255,0.55); text-decoration: none; transition: all 0.2s; cursor: pointer; }
 .switch-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .switch-item.active { background: rgba(255,255,255,0.12); color: #fff; }
-.switch-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.switch-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; transition: transform 0.2s; }
+.switch-item:hover .switch-dot { transform: scale(1.4); }
+.switch-item.active .switch-dot { box-shadow: 0 0 6px rgba(255,255,255,0.4); }
 .sidebar-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 11px; color: rgba(255,255,255,0.4); }
+.sidebar-footer span { transition: color 0.2s; }
+.sidebar-footer span:hover { color: rgba(255,255,255,0.8); }
 
 /* Mini Calendar in sidebar */
 .mini-cal { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.12); }
 .mini-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; }
 .mini-cal-header span { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 500; }
-.mini-cal-header button { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
-.mini-cal-header button:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.mini-cal-header button { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; transition: all 0.18s; }
+.mini-cal-header button:hover { color: #fff; background: rgba(255,255,255,0.1); transform: scale(1.1); }
+.mini-cal-header button:active { transform: scale(0.95); }
 .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; text-align: center; }
 .mini-cal-weekday { font-size: 10px; color: rgba(255,255,255,0.35); padding: 2px 0; }
-.mini-cal-day { font-size: 11px; color: rgba(255,255,255,0.5); padding: 3px 0; border-radius: 4px; cursor: pointer; position: relative; }
-.mini-cal-day:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.mini-cal-day { font-size: 11px; color: rgba(255,255,255,0.5); padding: 3px 0; border-radius: 4px; cursor: pointer; position: relative; transition: all 0.15s; }
+.mini-cal-day:hover { background: rgba(255,255,255,0.1); color: #fff; transform: scale(1.1); }
 .mini-cal-day.today { background: rgba(255,255,255,0.2); color: #fff; font-weight: 700; }
 .mini-cal-day.selected { background: rgba(255,255,255,0.3); color: #fff; }
 .mini-cal-day.other-month { opacity: 0.3; }
@@ -117,25 +139,63 @@ body {
 
 .main { margin-left: 240px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
 
-.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+.topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 16px 32px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+}
 .topbar-left { display: flex; align-items: center; gap: 10px; }
-.topbar-title { font-size: 17px; font-weight: 500; }
+.topbar-title { font-size: 17px; font-weight: 500; transition: opacity 0.25s; }
 .topbar-actions { display: flex; gap: 10px; align-items: center; }
 
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text); transition: var(--transition); font-weight: 500; }
-.btn:hover { background: var(--surface2); }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  border: 1px solid var(--border2); background: transparent; color: var(--text);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-weight: 500;
+  position: relative; overflow: hidden;
+}
+.btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(0,0,0,0.06) 0%, transparent 60%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.btn:hover::after { opacity: 1; }
+.btn:hover { background: var(--surface2); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.btn:active { transform: translateY(0); box-shadow: none; }
 .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-.btn-primary:hover { opacity: 0.9; }
+.btn-primary:hover { box-shadow: 0 4px 14px rgba(31,78,121,0.3); }
+.btn-primary::after { background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.15) 0%, transparent 60%); }
 .btn-sm { padding: 5px 12px; font-size: 12px; }
-.btn-icon { padding: 6px 10px; font-size: 16px; border: none; background: none; color: var(--text2); cursor: pointer; border-radius: var(--radius-sm); }
-.btn-icon:hover { background: var(--surface2); color: var(--text); }
+.btn-icon {
+  padding: 6px 10px; font-size: 16px; border: none; background: none;
+  color: var(--text2); cursor: pointer; border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.btn-icon:hover { background: var(--surface2); color: var(--text); transform: scale(1.1); }
+.btn-icon:active { transform: scale(0.95); }
 
 .view-tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: var(--radius-sm); padding: 3px; }
-.view-tab { padding: 5px 14px; border-radius: 6px; font-size: 12.5px; cursor: pointer; border: none; background: none; color: var(--text2); font-family: inherit; transition: var(--transition); }
+.view-tab {
+  padding: 5px 14px; border-radius: 6px; font-size: 12.5px;
+  cursor: pointer; border: none; background: none; color: var(--text2);
+  font-family: inherit; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
 .view-tab:hover { color: var(--text); }
-.view-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.view-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 
 .content { flex: 1; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ======== VIEW TRANSITIONS ======== */
+.view-enter { animation: viewFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ======== CATEGORY COLORS ======== */
 .cat-work { --cat-color: var(--accent); --cat-bg: var(--accent-light); }
@@ -147,12 +207,18 @@ body {
 
 /* ======== DAY / WEEK VIEW ======== */
 .timeline-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.allday-section { background: var(--surface); border-bottom: 1px solid var(--border); padding: 4px 0 4px 72px; min-height: 28px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.allday-section { background: var(--surface); border-bottom: 1px solid var(--border); padding: 4px 0 4px 72px; min-height: 32px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; position: relative; }
 .allday-label { position: absolute; left: 0; width: 72px; text-align: center; font-size: 11px; color: var(--text3); }
-.allday-event { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent)); border-left: 3px solid var(--cat-color, var(--accent)); }
-.allday-event:hover { filter: brightness(0.95); }
+.allday-event {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+  border-radius: 6px; font-size: 12px; cursor: pointer;
+  background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent));
+  border-left: 3px solid var(--cat-color, var(--accent));
+  transition: all 0.2s; font-weight: 500;
+}
+.allday-event:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
-.timeline-body { flex: 1; overflow-y: auto; position: relative; }
+.timeline-body { flex: 1; overflow-y: auto; position: relative; scroll-behavior: smooth; }
 .timeline-grid { position: relative; min-height: calc(24 * 60px); }
 
 /* Day view specific */
@@ -161,11 +227,21 @@ body {
 .day-grid .day-column { grid-column: 2; position: relative; }
 
 /* Week view specific */
-.week-header { display: grid; grid-template-columns: 72px repeat(7, 1fr); background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
-.week-header-cell { text-align: center; padding: 8px 4px; font-size: 12px; color: var(--text2); border-left: 1px solid var(--border); }
-.week-header-cell .weekday { font-size: 11px; color: var(--text3); }
-.week-header-cell .datenum { font-size: 20px; font-weight: 500; color: var(--text); margin-top: 2px; width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
-.week-header-cell.today .datenum { background: var(--accent); color: #fff; }
+.week-header {
+  display: grid; grid-template-columns: 72px repeat(7, 1fr);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 5;
+}
+.week-header-cell { text-align: center; padding: 8px 4px; font-size: 12px; color: var(--text2); border-left: 1px solid var(--border); transition: background 0.2s; }
+.week-header-cell .weekday { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.week-header-cell .datenum {
+  font-size: 20px; font-weight: 500; color: var(--text); margin-top: 2px;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.week-header-cell:hover .datenum { background: var(--surface2); }
+.week-header-cell.today .datenum { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(31,78,121,0.3); }
 
 .week-grid { display: grid; grid-template-columns: 72px repeat(7, 1fr); position: relative; }
 .week-grid .time-labels { grid-column: 1; }
@@ -175,114 +251,272 @@ body {
 .time-label { height: 60px; display: flex; align-items: flex-start; justify-content: center; font-size: 11px; color: var(--text3); padding-top: 0; transform: translateY(-7px); }
 
 .hour-line { position: absolute; left: 72px; right: 0; height: 1px; background: var(--border); pointer-events: none; }
+/* Half-hour dashed lines */
+.half-hour-line { position: absolute; left: 72px; right: 0; height: 1px; background: var(--border); opacity: 0.4; pointer-events: none; border-top: 1px dashed var(--border); background: none; }
 
-.now-line { position: absolute; left: 60px; right: 0; height: 2px; background: var(--red); z-index: 4; pointer-events: none; }
-.now-line::before { content: ''; position: absolute; left: 0; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+.now-line {
+  position: absolute; left: 60px; right: 0; height: 2px;
+  background: var(--red); z-index: 4; pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(239,68,68,0.4));
+}
+.now-line::before {
+  content: ''; position: absolute; left: 0; top: -4px;
+  width: 10px; height: 10px; border-radius: 50%; background: var(--red);
+  box-shadow: 0 0 8px rgba(239,68,68,0.5);
+  animation: nowPulse 2s ease-in-out infinite;
+}
+@keyframes nowPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(239,68,68,0.3); }
+  50% { box-shadow: 0 0 12px rgba(239,68,68,0.6); }
+}
 
 /* Event blocks in day/week view */
-.event-block { position: absolute; left: 2px; right: 4px; border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; overflow: hidden; z-index: 2; transition: box-shadow 0.15s; border-left: 3px solid var(--cat-color, var(--accent)); background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent)); }
-.event-block:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 3; }
+.event-block {
+  position: absolute; left: 3px; right: 5px; border-radius: 8px;
+  padding: 4px 8px; font-size: 12px; cursor: pointer; overflow: hidden; z-index: 2;
+  border-left: 3px solid var(--cat-color, var(--accent));
+  background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent));
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s, z-index 0s;
+  backdrop-filter: blur(4px);
+}
+.event-block:hover { transform: scale(1.02) translateX(1px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 3; }
 .event-block .ev-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.event-block .ev-time { font-size: 11px; opacity: 0.8; }
+.event-block .ev-time { font-size: 11px; opacity: 0.75; }
 
-/* Click to create */
-.day-column, .week-col { cursor: pointer; }
-.day-column:hover, .week-col:hover { background: rgba(0,0,0,0.01); }
-[data-theme="dark"] .day-column:hover, [data-theme="dark"] .week-col:hover { background: rgba(255,255,255,0.01); }
+/* Click to create — time hover indicator */
+.day-column, .week-col { cursor: pointer; position: relative; }
+.day-column::after, .week-col::after {
+  content: ''; position: absolute; left: 0; right: 0;
+  height: 30px; background: var(--accent-light); opacity: 0;
+  pointer-events: none; transition: opacity 0.15s; border-radius: 4px;
+  top: var(--hover-y, -9999px);
+}
+.day-column:hover::after, .week-col:hover::after { opacity: 0.5; }
+[data-theme="dark"] .day-column::after, [data-theme="dark"] .week-col::after { background: var(--accent-mid); }
 
 /* ======== MONTH VIEW ======== */
 .month-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 24px; }
 .month-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; border: 1px solid var(--border); border-bottom: none; }
-.month-grid-header-cell { text-align: center; padding: 10px; font-size: 12px; color: var(--text2); font-weight: 500; }
-.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); flex: 1; border: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); background: var(--surface); }
-.month-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 4px 6px; min-height: 90px; cursor: pointer; transition: background 0.15s; overflow: hidden; }
+.month-grid-header-cell { text-align: center; padding: 10px; font-size: 12px; color: var(--text2); font-weight: 500; letter-spacing: 0.5px; }
+.month-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr);
+  flex: 1; border: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--surface);
+}
+.month-cell {
+  border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 4px 6px; min-height: 90px; cursor: pointer; overflow: hidden;
+  transition: background 0.2s, box-shadow 0.2s;
+  position: relative;
+}
 .month-cell:nth-child(7n) { border-right: none; }
 .month-cell:hover { background: var(--surface2); }
+.month-cell:hover .month-cell-date { color: var(--accent); }
 .month-cell.other-month { opacity: 0.4; }
 .month-cell.today { background: var(--accent-light); }
-.month-cell-date { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.month-cell.today::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--accent);
+}
+.month-cell-date { font-size: 13px; font-weight: 500; margin-bottom: 2px; transition: color 0.2s; }
 .month-cell.today .month-cell-date { color: var(--accent); font-weight: 700; }
-.month-event { display: flex; align-items: center; gap: 4px; padding: 1px 6px; margin-bottom: 1px; border-radius: 3px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent)); border-left: 2px solid var(--cat-color, var(--accent)); }
-.month-event:hover { filter: brightness(0.95); }
-.month-more { font-size: 11px; color: var(--accent2); cursor: pointer; padding: 1px 6px; }
+.month-event {
+  display: flex; align-items: center; gap: 4px; padding: 2px 6px; margin-bottom: 2px;
+  border-radius: 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent));
+  border-left: 2px solid var(--cat-color, var(--accent));
+  transition: all 0.18s; font-weight: 500;
+}
+.month-event:hover { transform: translateX(2px); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.month-more { font-size: 11px; color: var(--accent2); cursor: pointer; padding: 1px 6px; transition: color 0.15s; font-weight: 500; }
 .month-more:hover { text-decoration: underline; }
 
 /* ======== YEAR VIEW ======== */
 .year-view { flex: 1; overflow-y: auto; padding: 24px; }
 .year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
-.year-month-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; cursor: pointer; transition: var(--transition); }
-.year-month-card:hover { box-shadow: var(--shadow); border-color: var(--accent-mid); }
+.year-month-card {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 16px; cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.year-month-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-color: var(--accent-mid); transform: translateY(-4px); }
 .year-month-title { font-size: 14px; font-weight: 500; margin-bottom: 10px; text-align: center; }
 .year-mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; text-align: center; }
 .year-mini-weekday { font-size: 9px; color: var(--text3); padding: 2px 0; }
-.year-mini-day { font-size: 10px; color: var(--text2); padding: 2px 0; border-radius: 3px; position: relative; }
-.year-mini-day.today { background: var(--accent); color: #fff; font-weight: 700; border-radius: 50%; }
+.year-mini-day { font-size: 10px; color: var(--text2); padding: 2px 0; border-radius: 3px; position: relative; transition: all 0.15s; }
+.year-mini-day.today { background: var(--accent); color: #fff; font-weight: 700; border-radius: 50%; box-shadow: 0 1px 4px rgba(31,78,121,0.3); }
 .year-mini-day.has-event { font-weight: 600; color: var(--accent); }
+.year-mini-day.has-event::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
 .year-mini-day.other-month { visibility: hidden; }
 
 /* ======== ALL EVENTS LIST VIEW ======== */
 .list-view { flex: 1; overflow-y: auto; padding: 24px 32px; }
-.list-section { margin-bottom: 24px; }
-.list-section-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-.list-event { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
-.list-event:hover { background: var(--surface2); }
-.list-event-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.list-section { margin-bottom: 24px; animation: listSectionIn 0.35s ease; }
+@keyframes listSectionIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.list-section-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 6px; }
+.list-section-title::before { content: ''; width: 4px; height: 14px; border-radius: 2px; background: var(--accent); }
+.list-event {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+.list-event:hover { background: var(--surface2); transform: translateX(4px); border-color: var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.list-event-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; transition: transform 0.2s; box-shadow: 0 0 0 2px var(--surface); }
+.list-event:hover .list-event-dot { transform: scale(1.3); }
 .list-event-info { flex: 1; min-width: 0; }
 .list-event-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-event-meta { font-size: 12px; color: var(--text2); }
-.list-event-cat { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
-.list-empty { text-align: center; padding: 48px 0; color: var(--text3); }
-.list-empty svg { width: 64px; height: 64px; margin-bottom: 12px; opacity: 0.3; }
+.list-event-cat { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 500; }
+.list-empty { text-align: center; padding: 64px 0; color: var(--text3); }
+.list-empty svg { width: 80px; height: 80px; margin-bottom: 16px; opacity: 0.2; }
+.list-empty div { font-size: 15px; }
 
 /* Search & Filter bar */
-.filter-bar { display: flex; gap: 10px; align-items: center; padding: 12px 32px; background: var(--surface); border-bottom: 1px solid var(--border); }
-.search-input { flex: 1; max-width: 300px; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: var(--transition); }
-.search-input:focus { border-color: var(--accent); }
-.filter-select { padding: 7px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--text); outline: none; cursor: pointer; }
+.filter-bar {
+  display: flex; gap: 10px; align-items: center; padding: 12px 32px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.search-input {
+  flex: 1; max-width: 300px; padding: 8px 14px 8px 36px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: var(--bg); font-size: 13px; font-family: inherit;
+  color: var(--text); outline: none; transition: all 0.25s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 12px center;
+}
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,78,121,0.1); }
+[data-theme="dark"] .search-input:focus { box-shadow: 0 0 0 3px rgba(96,165,250,0.15); }
+.filter-select {
+  padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: var(--bg); font-size: 13px; font-family: inherit;
+  color: var(--text); outline: none; cursor: pointer; transition: all 0.2s;
+}
+.filter-select:focus { border-color: var(--accent); }
 
 /* ======== MODAL ======== */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
-.modal-overlay.show { display: flex; }
-.modal { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow2); width: 520px; max-width: 90vw; max-height: 85vh; display: flex; flex-direction: column; }
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0); transition: background 0.3s;
+}
+.modal-overlay.show { display: flex; background: rgba(0,0,0,0.4); }
+[data-theme="dark"] .modal-overlay.show { background: rgba(0,0,0,0.6); }
+.modal-overlay.show .modal { animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.modal-overlay.closing .modal { animation: modalOut 0.2s ease-in forwards; }
+.modal-overlay.closing { background: rgba(0,0,0,0) !important; transition: background 0.2s; }
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes modalOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.95) translateY(8px); }
+}
+.modal {
+  background: var(--surface); border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px var(--border);
+  width: 520px; max-width: 90vw; max-height: 85vh; display: flex; flex-direction: column;
+}
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
-.modal-header h3 { font-size: 16px; font-weight: 500; }
-.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text3); padding: 4px 8px; border-radius: 4px; }
-.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-header h3 { font-size: 16px; font-weight: 600; }
+.modal-close {
+  background: none; border: none; font-size: 20px; cursor: pointer;
+  color: var(--text3); padding: 4px 8px; border-radius: 6px;
+  transition: all 0.2s; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--surface2); color: var(--text); transform: rotate(90deg); }
 .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
 .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
 .form-group { margin-bottom: 16px; }
-.form-label { display: block; font-size: 12.5px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
-.form-input { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: var(--transition); }
-.form-input:focus { border-color: var(--accent); }
+.form-label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+.form-input {
+  width: 100%; padding: 9px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border2); background: var(--bg);
+  font-size: 13px; font-family: inherit; color: var(--text);
+  outline: none; transition: all 0.25s;
+}
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,78,121,0.08); }
+[data-theme="dark"] .form-input:focus { box-shadow: 0 0 0 3px rgba(96,165,250,0.12); }
 .form-row { display: flex; gap: 12px; }
 .form-row > * { flex: 1; }
 .form-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
-.form-check input { accent-color: var(--accent); }
+.form-check input { accent-color: var(--accent); width: 16px; height: 16px; }
 textarea.form-input { resize: vertical; min-height: 60px; }
 select.form-input { cursor: pointer; }
-
-/* Color picker */
-.color-options { display: flex; gap: 6px; flex-wrap: wrap; }
-.color-opt { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: var(--transition); }
-.color-opt:hover { transform: scale(1.1); }
-.color-opt.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--surface); }
 
 /* ======== CONFIRM DIALOG ======== */
 .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; align-items: center; justify-content: center; }
 .confirm-overlay.show { display: flex; }
-.confirm-box { background: var(--surface); border-radius: var(--radius); padding: 24px; width: 380px; max-width: 90vw; box-shadow: var(--shadow2); text-align: center; }
-.confirm-box h4 { font-size: 15px; margin-bottom: 8px; }
-.confirm-box p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.confirm-overlay.show .confirm-box { animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.confirm-box {
+  background: var(--surface); border-radius: 16px; padding: 28px;
+  width: 380px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  text-align: center;
+}
+.confirm-box h4 { font-size: 16px; margin-bottom: 8px; font-weight: 600; }
+.confirm-box p { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.7; }
 .confirm-actions { display: flex; gap: 10px; justify-content: center; }
 
 /* ======== TOAST ======== */
 .toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
-.toast { padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; color: #fff; animation: toastIn 0.3s ease; }
-.toast.success { background: var(--green); }
-.toast.error { background: var(--red); }
-.toast.info { background: var(--accent); }
-@keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.toast {
+  padding: 12px 20px; border-radius: 10px; font-size: 13px; color: #fff;
+  animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  display: flex; align-items: center; gap: 8px; font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+.toast.success { background: rgba(45,106,79,0.95); }
+.toast.success::before { content: '\2713'; font-size: 15px; }
+.toast.error { background: rgba(155,28,28,0.95); }
+.toast.error::before { content: '\2717'; font-size: 15px; }
+.toast.info { background: rgba(31,78,121,0.95); }
+.toast.info::before { content: '\2139'; font-size: 15px; font-weight: 700; }
+.toast-exit { animation: toastOut 0.3s ease-in forwards; }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(40px) scale(0.95); }
+}
+
+/* ======== EVENT TOOLTIP ======== */
+.event-tooltip {
+  position: fixed; z-index: 150; pointer-events: none;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  font-size: 12px; max-width: 260px;
+  animation: tooltipIn 0.15s ease;
+  transform-origin: top left;
+}
+@keyframes tooltipIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.event-tooltip .tt-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.event-tooltip .tt-time { color: var(--text2); margin-bottom: 2px; display: flex; align-items: center; gap: 4px; }
+.event-tooltip .tt-cat { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 11px; margin-top: 4px; font-weight: 500; }
+.event-tooltip .tt-desc { color: var(--text2); margin-top: 6px; font-size: 11.5px; line-height: 1.5; max-height: 60px; overflow: hidden; }
+
+/* ======== KEYBOARD SHORTCUT HINT ======== */
+.kbd-hint {
+  position: fixed; bottom: 16px; right: 16px; z-index: 40;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 14px; font-size: 11px;
+  color: var(--text3); box-shadow: var(--shadow);
+  display: flex; gap: 12px; align-items: center;
+  opacity: 0.6; transition: opacity 0.2s;
+}
+.kbd-hint:hover { opacity: 1; }
+.kbd-hint kbd { background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; padding: 1px 6px; font-family: inherit; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -347,9 +581,9 @@ select.form-input { cursor: pointer; }
   <div class="main">
     <div class="topbar">
       <div class="topbar-left">
-        <button class="btn-icon" onclick="navigate(-1)" title="上一个">&#9664;</button>
+        <button class="btn-icon" onclick="navigate(-1)" title="上一个 (←)">&#9664;</button>
         <button class="btn btn-sm" onclick="goToday()">今天</button>
-        <button class="btn-icon" onclick="navigate(1)" title="下一个">&#9654;</button>
+        <button class="btn-icon" onclick="navigate(1)" title="下一个 (→)">&#9654;</button>
         <span class="topbar-title" id="topbar-title"></span>
       </div>
       <div class="topbar-actions">
@@ -454,14 +688,26 @@ select.form-input { cursor: pointer; }
 <!-- Toast -->
 <div class="toast-container" id="toast-container"></div>
 
+<!-- Tooltip -->
+<div class="event-tooltip" id="event-tooltip" style="display:none;"></div>
+
+<!-- Keyboard hints -->
+<div class="kbd-hint" id="kbd-hint">
+  <span><kbd>N</kbd> 新建</span>
+  <span><kbd>T</kbd> 今天</span>
+  <span><kbd>←</kbd><kbd>→</kbd> 导航</span>
+  <span><kbd>1</kbd>-<kbd>4</kbd> 视图</span>
+</div>
+
 <script>
 // ======== GLOBALS ========
-let events = [];           // all calendar events
-let kanbanTasks = [];      // synced from kanban
-let currentView = 'month'; // day | week | month | year | list
+let events = [];
+let kanbanTasks = [];
+let currentView = 'month';
 let currentDate = new Date();
 let editingEventId = null;
 let confirmResolve = null;
+let tooltipTimer = null;
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
 const WEEKDAYS_FULL = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -501,7 +747,6 @@ function minutesToTime(m) {
 }
 
 // ======== DATA PERSISTENCE ========
-// Try Electron API first, then localStorage fallback
 async function loadEvents() {
   try {
     if (window.electronAPI && window.electronAPI.readEvents) {
@@ -534,7 +779,6 @@ async function removeEvent(id) {
   } catch (e) { console.error('Delete event failed:', e); }
 }
 
-// Sync kanban tasks as calendar events
 async function syncKanbanTasks() {
   kanbanTasks = [];
   try {
@@ -571,7 +815,6 @@ async function syncKanbanTasks() {
   } catch (e) { console.error('Sync kanban failed:', e); }
 }
 
-// ======== GET ALL EVENTS (user + kanban) ========
 function getAllEvents() {
   return [...events, ...kanbanTasks];
 }
@@ -612,8 +855,60 @@ function showToast(msg, type = 'info') {
   t.className = `toast ${type}`;
   t.textContent = msg;
   c.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+  setTimeout(() => {
+    t.classList.add('toast-exit');
+    t.addEventListener('animationend', () => t.remove());
+  }, 2500);
 }
+
+// ======== TOOLTIP ========
+function showTooltip(evId, x, y) {
+  const ev = getAllEvents().find(e => e.id === evId);
+  if (!ev) return;
+  const tip = document.getElementById('event-tooltip');
+  const timeStr = ev.allDay ? '全天' : `${ev.startTime} - ${ev.endTime}`;
+  const dateStr = ev.startDate === ev.endDate ? ev.startDate : `${ev.startDate} ~ ${ev.endDate}`;
+  const catColor = getCatColor(ev.category);
+  let html = `<div class="tt-title">${escHtml(ev.title)}</div>`;
+  html += `<div class="tt-time">&#128197; ${dateStr} &nbsp; &#128336; ${timeStr}</div>`;
+  html += `<span class="tt-cat" style="background:${catColor}20; color:${catColor};">${CAT_LABELS[ev.category]||'其他'}${ev.isKanban ? ' (看板)' : ''}</span>`;
+  if (ev.description) html += `<div class="tt-desc">${escHtml(ev.description)}</div>`;
+  tip.innerHTML = html;
+  // Position: keep within viewport
+  tip.style.display = 'block';
+  const rect = tip.getBoundingClientRect();
+  const maxX = window.innerWidth - rect.width - 12;
+  const maxY = window.innerHeight - rect.height - 12;
+  tip.style.left = Math.min(x + 12, maxX) + 'px';
+  tip.style.top = Math.min(y + 12, maxY) + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('event-tooltip').style.display = 'none';
+}
+
+// Delegate tooltip events
+document.addEventListener('mouseover', e => {
+  const block = e.target.closest('[data-ev-id]');
+  if (block) {
+    clearTimeout(tooltipTimer);
+    tooltipTimer = setTimeout(() => showTooltip(block.dataset.evId, e.clientX, e.clientY), 400);
+  }
+});
+document.addEventListener('mouseout', e => {
+  const block = e.target.closest('[data-ev-id]');
+  if (block) { clearTimeout(tooltipTimer); hideTooltip(); }
+});
+document.addEventListener('mousemove', e => {
+  const tip = document.getElementById('event-tooltip');
+  if (tip.style.display === 'block') {
+    const rect = tip.getBoundingClientRect();
+    const maxX = window.innerWidth - rect.width - 12;
+    const maxY = window.innerHeight - rect.height - 12;
+    tip.style.left = Math.min(e.clientX + 12, maxX) + 'px';
+    tip.style.top = Math.min(e.clientY + 12, maxY) + 'px';
+  }
+});
 
 // ======== CONFIRM ========
 function showConfirm(title, msg) {
@@ -628,8 +923,23 @@ function closeConfirm(result) {
 }
 
 // ======== MODAL ========
-function openModal(id) { document.getElementById(id).classList.add('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('closing');
+  el.classList.add('show');
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  el.classList.add('closing');
+  setTimeout(() => { el.classList.remove('show', 'closing'); }, 200);
+}
+
+// Close modal on overlay click
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('show')) {
+    closeModal(e.target.id);
+  }
+});
 
 function toggleAllday() {
   const allday = document.getElementById('ef-allday').checked;
@@ -654,7 +964,7 @@ function openNewEvent(date, time) {
   document.getElementById('ef-desc').value = '';
   toggleAllday();
   openModal('event-modal');
-  document.getElementById('ef-title').focus();
+  setTimeout(() => document.getElementById('ef-title').focus(), 100);
 }
 
 function openEditEvent(evId) {
@@ -779,17 +1089,41 @@ function goToday() {
 
 function switchView(view) {
   currentView = view;
-  // Update sidebar
   document.querySelectorAll('.sidebar-nav .nav-item').forEach((n, i) => {
     const views = ['day', 'week', 'month', 'year', 'list'];
     n.classList.toggle('active', views[i] === view);
   });
-  // Update view tabs
   document.querySelectorAll('.view-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.view === view);
   });
   renderView();
 }
+
+// ======== KEYBOARD SHORTCUTS ========
+document.addEventListener('keydown', e => {
+  // Skip if inside input/textarea/select
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  // Skip if modal is open
+  if (document.querySelector('.modal-overlay.show')) {
+    if (e.key === 'Escape') {
+      closeModal('event-modal');
+      e.preventDefault();
+    }
+    return;
+  }
+  switch (e.key) {
+    case 'ArrowLeft': navigate(-1); e.preventDefault(); break;
+    case 'ArrowRight': navigate(1); e.preventDefault(); break;
+    case 't': case 'T': goToday(); break;
+    case 'n': case 'N': openNewEvent(); break;
+    case '1': switchView('day'); break;
+    case '2': switchView('week'); break;
+    case '3': switchView('month'); break;
+    case '4': switchView('year'); break;
+    case '5': switchView('list'); break;
+    case 'Escape': break;
+  }
+});
 
 // ======== RENDER DISPATCHER ========
 function renderView() {
@@ -802,6 +1136,9 @@ function renderView() {
     case 'year': renderYearView(c); break;
     case 'list': renderListView(c); break;
   }
+  // Add entrance animation
+  const inner = c.firstElementChild;
+  if (inner) { inner.classList.add('view-enter'); }
 }
 
 function updateTopbarTitle() {
@@ -839,41 +1176,38 @@ function renderDayView(container) {
   const timedEvs = dayEvents.filter(e => !e.allDay && e.startDate === e.endDate);
 
   let html = `<div class="timeline-view">`;
-  // All day section
   html += `<div class="allday-section" style="position:relative;">`;
   html += `<span class="allday-label">全天</span>`;
   for (const ev of allDayEvs) {
-    html += `<div class="allday-event cat-${ev.category||'other'}" onclick="openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
+    html += `<div class="allday-event cat-${ev.category||'other'}" data-ev-id="${ev.id}" onclick="openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
   }
+  if (!allDayEvs.length) html += `<span style="font-size:11px; color:var(--text3); opacity:0.5;">无全天事件</span>`;
   html += `</div>`;
 
   html += `<div class="timeline-body" id="timeline-body">`;
   html += `<div class="day-grid timeline-grid">`;
-  // Time labels
   html += `<div class="time-labels">`;
   for (let h = 0; h < 24; h++) {
     html += `<div class="time-label">${pad2(h)}:00</div>`;
   }
   html += `</div>`;
 
-  // Hour lines
   for (let h = 0; h < 24; h++) {
     html += `<div class="hour-line" style="top:${h*60}px;"></div>`;
+    html += `<div class="half-hour-line" style="top:${h*60+30}px;"></div>`;
   }
 
-  // Day column
-  html += `<div class="day-column" onclick="onTimelineClick(event, '${dateStr}')">`;
+  html += `<div class="day-column" onclick="onTimelineClick(event, '${dateStr}')" onmousemove="onTimelineHover(event)">`;
   for (const ev of timedEvs) {
     const top = timeToMinutes(ev.startTime);
-    const height = Math.max(timeToMinutes(ev.endTime) - top, 15);
-    html += `<div class="event-block cat-${ev.category||'other'}" style="top:${top}px; height:${height}px;" onclick="event.stopPropagation(); openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">
+    const height = Math.max(timeToMinutes(ev.endTime) - top, 20);
+    html += `<div class="event-block cat-${ev.category||'other'}" data-ev-id="${ev.id}" style="top:${top}px; height:${height}px;" onclick="event.stopPropagation(); openEditEvent('${ev.id}')">
       <div class="ev-title">${escHtml(ev.title)}</div>
-      <div class="ev-time">${ev.startTime} - ${ev.endTime}</div>
+      ${height >= 35 ? `<div class="ev-time">${ev.startTime} - ${ev.endTime}</div>` : ''}
     </div>`;
   }
   html += `</div>`;
 
-  // Now line
   const now = new Date();
   if (isSameDay(now, currentDate)) {
     const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -902,15 +1236,14 @@ function renderWeekView(container) {
 
   let html = `<div class="timeline-view">`;
 
-  // All day
   html += `<div class="allday-section" style="position:relative;">`;
   html += `<span class="allday-label">全天</span>`;
   for (const ev of allDayEvs) {
-    html += `<div class="allday-event cat-${ev.category||'other'}" onclick="openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
+    html += `<div class="allday-event cat-${ev.category||'other'}" data-ev-id="${ev.id}" onclick="openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
   }
+  if (!allDayEvs.length) html += `<span style="font-size:11px; color:var(--text3); opacity:0.5;">无全天事件</span>`;
   html += `</div>`;
 
-  // Week header
   html += `<div class="week-header">`;
   html += `<div></div>`;
   for (const d of days) {
@@ -924,35 +1257,32 @@ function renderWeekView(container) {
 
   html += `<div class="timeline-body" id="timeline-body">`;
   html += `<div class="week-grid timeline-grid">`;
-  // Time labels
   html += `<div class="time-labels">`;
   for (let h = 0; h < 24; h++) {
     html += `<div class="time-label">${pad2(h)}:00</div>`;
   }
   html += `</div>`;
 
-  // Hour lines
   for (let h = 0; h < 24; h++) {
     html += `<div class="hour-line" style="top:${h*60}px;"></div>`;
+    html += `<div class="half-hour-line" style="top:${h*60+30}px;"></div>`;
   }
 
-  // Day columns
   for (let i = 0; i < 7; i++) {
     const dateStr = fmtDate(days[i]);
     const dayTimedEvs = weekEvents.filter(e => !e.allDay && e.startDate === e.endDate && e.startDate === dateStr);
-    html += `<div class="week-col" onclick="onTimelineClick(event, '${dateStr}')" style="grid-column:${i+2};">`;
+    html += `<div class="week-col" onclick="onTimelineClick(event, '${dateStr}')" onmousemove="onTimelineHover(event)" style="grid-column:${i+2};">`;
     for (const ev of dayTimedEvs) {
       const top = timeToMinutes(ev.startTime);
-      const height = Math.max(timeToMinutes(ev.endTime) - top, 15);
-      html += `<div class="event-block cat-${ev.category||'other'}" style="top:${top}px; height:${height}px;" onclick="event.stopPropagation(); openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">
+      const height = Math.max(timeToMinutes(ev.endTime) - top, 20);
+      html += `<div class="event-block cat-${ev.category||'other'}" data-ev-id="${ev.id}" style="top:${top}px; height:${height}px;" onclick="event.stopPropagation(); openEditEvent('${ev.id}')">
         <div class="ev-title">${escHtml(ev.title)}</div>
-        <div class="ev-time">${ev.startTime} - ${ev.endTime}</div>
+        ${height >= 35 ? `<div class="ev-time">${ev.startTime} - ${ev.endTime}</div>` : ''}
       </div>`;
     }
     html += `</div>`;
   }
 
-  // Now line
   const monStr = fmtDate(monday);
   const sunStr = fmtDate(days[6]);
   if (fmtDate(now) >= monStr && fmtDate(now) <= sunStr) {
@@ -984,16 +1314,23 @@ function onTimelineClick(e, dateStr) {
   openNewEvent(dateStr, minutesToTime(minutes));
 }
 
+function onTimelineHover(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const scrollTop = e.currentTarget.closest('.timeline-body')?.scrollTop || 0;
+  const y = e.clientY - rect.top + scrollTop;
+  const snapped = Math.floor(y / 30) * 30;
+  e.currentTarget.style.setProperty('--hover-y', snapped + 'px');
+}
+
 // ======== MONTH VIEW ========
 function renderMonthView(container) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const startWeekday = (firstDay.getDay() + 6) % 7; // Monday = 0
+  const startWeekday = (firstDay.getDay() + 6) % 7;
   const today = new Date();
 
-  // Build 6 weeks grid
   const cells = [];
   const startDate = new Date(firstDay);
   startDate.setDate(startDate.getDate() - startWeekday);
@@ -1025,7 +1362,7 @@ function renderMonthView(container) {
     html += `<div class="month-cell-date">${cell.getDate()}</div>`;
     const show = dayEvs.slice(0, 3);
     for (const ev of show) {
-      html += `<div class="month-event cat-${ev.category||'other'}" onclick="event.stopPropagation(); openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
+      html += `<div class="month-event cat-${ev.category||'other'}" data-ev-id="${ev.id}" onclick="event.stopPropagation(); openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
     }
     if (dayEvs.length > 3) {
       html += `<div class="month-more" onclick="event.stopPropagation(); currentDate=new Date(${cell.getFullYear()},${cell.getMonth()},${cell.getDate()}); switchView('day');">+${dayEvs.length - 3} 更多</div>`;
@@ -1049,13 +1386,13 @@ function renderYearView(container) {
     const first = new Date(year, m, 1);
     const last = new Date(year, m + 1, 0);
     const startWd = (first.getDay() + 6) % 7;
+    const isCurrent = year === today.getFullYear() && m === today.getMonth();
 
-    html += `<div class="year-month-card" onclick="currentDate=new Date(${year},${m},1); switchView('month');">`;
-    html += `<div class="year-month-title">${MONTHS[m]}</div>`;
+    html += `<div class="year-month-card" style="${isCurrent ? 'border-color: var(--accent-mid);' : ''}" onclick="currentDate=new Date(${year},${m},1); switchView('month');">`;
+    html += `<div class="year-month-title" style="${isCurrent ? 'color: var(--accent);' : ''}">${MONTHS[m]}</div>`;
     html += `<div class="year-mini-grid">`;
     for (const w of WEEKDAYS) html += `<div class="year-mini-weekday">${w}</div>`;
 
-    // Empty cells
     for (let i = 0; i < startWd; i++) html += `<div class="year-mini-day other-month"></div>`;
 
     for (let d = 1; d <= last.getDate(); d++) {
@@ -1091,6 +1428,7 @@ function renderListView(container) {
       <option value="task">任务</option>
       <option value="other">其他</option>
     </select>
+    <span style="margin-left:auto; font-size:12px; color:var(--text3);">${allEvs.length} 个日程</span>
   </div>`;
 
   html += `<div class="list-view" id="list-content">`;
@@ -1100,9 +1438,8 @@ function renderListView(container) {
 }
 
 function renderListEvents(evs) {
-  if (!evs.length) return `<div class="list-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div>暂无日程</div></div>`;
+  if (!evs.length) return `<div class="list-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" stroke-linecap="round"/></svg><div>暂无日程</div><div style="font-size:12px; margin-top:4px;">按 <kbd style="background:var(--surface2); border:1px solid var(--border2); border-radius:3px; padding:0 5px; font-size:11px;">N</kbd> 快速创建</div></div>`;
 
-  // Group by date
   const groups = {};
   for (const ev of evs) {
     const key = ev.startDate;
@@ -1116,14 +1453,14 @@ function renderListEvents(evs) {
     const d = parseDate(date);
     const label = date === today ? '今天' : `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${WEEKDAYS_FULL[(d.getDay()+6)%7]}`;
     html += `<div class="list-section">`;
-    html += `<div class="list-section-title">${label}</div>`;
+    html += `<div class="list-section-title">${label} <span style="font-weight:400; color:var(--text3); font-size:12px;">(${items.length})</span></div>`;
     for (const ev of items) {
       const timeStr = ev.allDay ? '全天' : `${ev.startTime} - ${ev.endTime}`;
       html += `<div class="list-event" onclick="openEditEvent('${ev.id}')">
         <div class="list-event-dot" style="background:${getCatColor(ev.category)}"></div>
         <div class="list-event-info">
           <div class="list-event-title">${escHtml(ev.title)}</div>
-          <div class="list-event-meta">${timeStr}${ev.startDate !== ev.endDate ? ' ~ '+ev.endDate : ''}</div>
+          <div class="list-event-meta">${timeStr}${ev.startDate !== ev.endDate ? ' ~ '+ev.endDate : ''}${ev.isKanban ? ' &middot; 看板任务' : ''}</div>
         </div>
         <span class="list-event-cat cat-${ev.category||'other'}" style="background:var(--cat-bg); color:var(--cat-color);">${CAT_LABELS[ev.category]||'其他'}</span>
       </div>`;
@@ -1164,7 +1501,6 @@ function renderMiniCal() {
   html += `<div class="mini-cal-grid">`;
   for (const w of WEEKDAYS) html += `<div class="mini-cal-weekday">${w}</div>`;
 
-  // Previous month days
   const prevLast = new Date(year, month, 0);
   for (let i = startWd - 1; i >= 0; i--) {
     const d = prevLast.getDate() - i;
@@ -1179,7 +1515,6 @@ function renderMiniCal() {
     html += `<div class="mini-cal-day ${isToday?'today':''} ${isSel?'selected':''} ${hasEv?'has-event':''}" onclick="event.stopPropagation(); miniCalSelect(${year},${month},${d})">${d}</div>`;
   }
 
-  // Next month days
   const totalCells = startWd + last.getDate();
   const remaining = (7 - totalCells % 7) % 7;
   for (let i = 1; i <= remaining; i++) {
@@ -1204,6 +1539,16 @@ function miniCalSelect(y, m, d) {
   }
   renderMiniCal();
 }
+
+// ======== RIPPLE EFFECT FOR BUTTONS ========
+document.addEventListener('mousedown', e => {
+  const btn = e.target.closest('.btn');
+  if (btn) {
+    const rect = btn.getBoundingClientRect();
+    btn.style.setProperty('--ripple-x', ((e.clientX - rect.left) / rect.width * 100) + '%');
+    btn.style.setProperty('--ripple-y', ((e.clientY - rect.top) / rect.height * 100) + '%');
+  }
+});
 
 // ======== INIT ========
 async function init() {
