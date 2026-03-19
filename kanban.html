@@ -461,14 +461,6 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
         重要任务
       </div>
-      <div class="nav-item" data-view="people" onclick="showView('people')">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        人员管理
-      </div>
-      <div class="nav-item" data-view="settings" onclick="showView('settings')">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
-        设置
-      </div>
     </div>
     <div class="sidebar-switch">
       <a class="switch-item" href="home.html">
@@ -2230,44 +2222,7 @@ const ENV_LABELS = { dev:'开发环境', test:'测试环境', prod:'生产环境
 const ENV_BADGE_CLASS = { dev:'env-badge-dev', test:'env-badge-test', prod:'env-badge-prod' };
 
 function getDefaultProjectEnvConfigs() {
-  return [
-    { id: genId(), name: 'MySQL', env: 'dev', fields: [
-      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
-    ]},
-    { id: genId(), name: 'MySQL', env: 'test', fields: [
-      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
-    ]},
-    { id: genId(), name: 'MySQL', env: 'prod', fields: [
-      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
-    ]},
-    { id: genId(), name: 'Redis', env: 'dev', fields: [
-      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
-    ]},
-    { id: genId(), name: 'Redis', env: 'test', fields: [
-      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
-    ]},
-    { id: genId(), name: 'Redis', env: 'prod', fields: [
-      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
-    ]},
-    { id: genId(), name: 'RocketMQ', env: 'dev', fields: [
-      { key: '连接地址', value: '' }, { key: '终端地址', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }, { key: '控制台地址', value: '' }
-    ]},
-    { id: genId(), name: 'RocketMQ', env: 'test', fields: [
-      { key: '连接地址', value: '' }, { key: '终端地址', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }, { key: '控制台地址', value: '' }
-    ]},
-    { id: genId(), name: 'RocketMQ', env: 'prod', fields: [
-      { key: '连接地址', value: '' }, { key: '终端地址', value: '' },
-      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }, { key: '控制台地址', value: '' }
-    ]}
-  ];
+  return [];
 }
 
 function getDefaultSubProjectEnvConfigs() {
