@@ -16,5 +16,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteImage: (taskId, index) => ipcRenderer.invoke('delete-image', taskId, index),
 
   // 数据目录
-  getDataDir: () => ipcRenderer.invoke('get-data-dir')
+  getDataDir: () => ipcRenderer.invoke('get-data-dir'),
+
+  // 设置
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  selectDataDir: () => ipcRenderer.invoke('select-data-dir')
 });

@@ -4,8 +4,33 @@ const fs = require('fs');
 
 let mainWindow;
 
+// ========== 设置文件 ==========
+function getSettingsPath() {
+  // 设置文件始终存放在 exe 旁（打包）或项目根目录（开发）
+  const baseDir = app.isPackaged ? path.dirname(app.getPath('exe')) : __dirname;
+  return path.join(baseDir, 'settings.json');
+}
+
+function loadSettings() {
+  const p = getSettingsPath();
+  try {
+    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
+  } catch {}
+  return {};
+}
+
+function saveSettings(settings) {
+  fs.writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf-8');
+}
+
 // 获取用户数据目录下的 data 文件夹路径
 function getDataDir() {
+  // 优先使用用户在设置中指定的自定义目录
+  const settings = loadSettings();
+  if (settings.dataDir && fs.existsSync(settings.dataDir)) {
+    return settings.dataDir;
+  }
+
   // 优先使用 exe 所在目录下的 data/，便于数据随程序携带
   const exeDir = path.dirname(app.getPath('exe'));
   const portableDataDir = path.join(exeDir, 'data');
@@ -141,4 +166,27 @@ ipcMain.handle('delete-image', async (event, taskId, index) => {
   const filePath = path.join(dataDir, `${taskId}_${index}.jpg`);
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   return true;
+});
+
+// ========== IPC: 设置 ==========
+
+// 读取设置
+ipcMain.handle('get-settings', async () => {
+  return loadSettings();
+});
+
+// 保存设置
+ipcMain.handle('save-settings', async (event, settings) => {
+  saveSettings(settings);
+  return true;
+});
+
+// 选择数据目录（弹出文件夹选择对话框）
+ipcMain.handle('select-data-dir', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: '选择数据存储目录',
+    properties: ['openDirectory', 'createDirectory']
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
 });
