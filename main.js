@@ -259,6 +259,128 @@ ipcMain.handle('delete-event', async (event, eventId) => {
   return true;
 });
 
+// ========== IPC: 会议纪要 ==========
+
+function getMeetingDir() {
+  const dir = path.join(getDataDir(), 'meetings');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function getMeetingConfigPath() {
+  return path.join(getMeetingDir(), 'config.json');
+}
+
+function loadMeetingConfig() {
+  try {
+    const p = getMeetingConfigPath();
+    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
+  } catch {}
+  return { autoWatch: false, autoClipboard: true, titlePrefix: '', defaultDuration: 60 };
+}
+
+// 读取所有会议纪要
+ipcMain.handle('read-meetings', async () => {
+  const dir = getMeetingDir();
+  const files = fs.readdirSync(dir).filter(f => f.startsWith('meeting_') && f.endsWith('.json'));
+  const meetings = [];
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(dir, file), 'utf-8');
+      meetings.push(JSON.parse(content));
+    } catch {}
+  }
+  meetings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return meetings;
+});
+
+// 保存单条会议纪要
+ipcMain.handle('save-meeting', async (event, meeting) => {
+  const dir = getMeetingDir();
+  const filePath = path.join(dir, `meeting_${meeting.id}.json`);
+  fs.writeFileSync(filePath, JSON.stringify(meeting, null, 2), 'utf-8');
+  return true;
+});
+
+// 删除会议纪要
+ipcMain.handle('delete-meeting', async (event, meetingId) => {
+  const dir = getMeetingDir();
+  const filePath = path.join(dir, `meeting_${meetingId}.json`);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  return true;
+});
+
+// 读取会议纪要配置
+ipcMain.handle('get-meeting-config', async () => {
+  return loadMeetingConfig();
+});
+
+// 保存会议纪要配置
+ipcMain.handle('save-meeting-config', async (event, config) => {
+  fs.writeFileSync(getMeetingConfigPath(), JSON.stringify(config, null, 2), 'utf-8');
+  return true;
+});
+
+// ---- 腾讯会议进程监听 ----
+let meetingWatchState = {
+  timer: null,
+  isRunning: false,
+  lastWemeetRunning: false
+};
+
+// 检查腾讯会议进程是否在运行（Windows）
+function isWemeetRunning() {
+  try {
+    const { execSync } = require('child_process');
+    // WeMeeting.exe 是腾讯会议主进程名
+    const out = execSync(
+      'tasklist /FI "IMAGENAME eq WeMeeting.exe" /NH /FO CSV 2>nul',
+      { encoding: 'utf-8', timeout: 3000, windowsHide: true }
+    );
+    return out.toLowerCase().includes('wemeeting.exe');
+  } catch {
+    return false;
+  }
+}
+
+ipcMain.handle('check-wemeet-running', async () => {
+  return isWemeetRunning();
+});
+
+ipcMain.handle('start-meeting-watch', async () => {
+  if (meetingWatchState.isRunning) return true;
+  meetingWatchState.isRunning = true;
+  meetingWatchState.lastWemeetRunning = isWemeetRunning();
+
+  meetingWatchState.timer = setInterval(() => {
+    const running = isWemeetRunning();
+    // 会议从"在运行"变为"不在运行"，说明刚结束
+    if (meetingWatchState.lastWemeetRunning && !running) {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('meeting-ended', { title: '' });
+        // 如果窗口最小化则闪烁任务栏提醒用户
+        if (mainWindow.isMinimized()) mainWindow.flashFrame(true);
+      }
+    }
+    meetingWatchState.lastWemeetRunning = running;
+  }, 3000);
+
+  return true;
+});
+
+ipcMain.handle('stop-meeting-watch', async () => {
+  meetingWatchState.isRunning = false;
+  if (meetingWatchState.timer) {
+    clearInterval(meetingWatchState.timer);
+    meetingWatchState.timer = null;
+  }
+  return true;
+});
+
+ipcMain.handle('get-meeting-watch-status', async () => {
+  return { isRunning: meetingWatchState.isRunning };
+});
+
 // ========== 应用使用时长统计模块 ==========
 
 const DEFAULT_EXCLUDED_APPS = [

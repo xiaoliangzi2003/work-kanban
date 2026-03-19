@@ -31,6 +31,7 @@
       "Index.html",
       "usage.html",
       "calendar.html",
+      "meeting.html",
       "data/**/*",
       "node_modules/echarts/dist/echarts.min.js"
     ],

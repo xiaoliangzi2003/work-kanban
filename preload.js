@@ -33,6 +33,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveEvent: (ev) => ipcRenderer.invoke('save-event', ev),
   deleteEvent: (eventId) => ipcRenderer.invoke('delete-event', eventId),
 
+  // 会议纪要
+  readMeetings: () => ipcRenderer.invoke('read-meetings'),
+  saveMeeting: (meeting) => ipcRenderer.invoke('save-meeting', meeting),
+  deleteMeeting: (meetingId) => ipcRenderer.invoke('delete-meeting', meetingId),
+  getMeetingConfig: () => ipcRenderer.invoke('get-meeting-config'),
+  saveMeetingConfig: (config) => ipcRenderer.invoke('save-meeting-config', config),
+  checkWemeetRunning: () => ipcRenderer.invoke('check-wemeet-running'),
+  startMeetingWatch: () => ipcRenderer.invoke('start-meeting-watch'),
+  stopMeetingWatch: () => ipcRenderer.invoke('stop-meeting-watch'),
+  getMeetingWatchStatus: () => ipcRenderer.invoke('get-meeting-watch-status'),
+  onMeetingEnded: (callback) => ipcRenderer.on('meeting-ended', (event, data) => callback(data)),
+
   // 使用时长统计
   startTracking: () => ipcRenderer.invoke('tracking-start'),
   stopTracking: () => ipcRenderer.invoke('tracking-stop'),
