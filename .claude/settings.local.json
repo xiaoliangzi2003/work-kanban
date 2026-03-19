@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"C:/Projects/Web/weekly-work-review/dist/win-unpacked/\"*.exe)",
+      "Bash(CSC_IDENTITY_AUTO_DISCOVERY=false npm run build)",
+      "Bash(ls -lh \"C:/Projects/Web/weekly-work-review/dist/\"*.exe)"
+    ]
+  }
+}

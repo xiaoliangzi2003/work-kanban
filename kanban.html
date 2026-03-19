@@ -1188,6 +1188,7 @@ let envConfigCustomFieldCount = 0;
 let viewingEnvConfigId = null;
 
 const FSA_AVAILABLE = ('showDirectoryPicker' in window);
+const ELECTRON_AVAILABLE = (typeof window.electronAPI !== 'undefined');
 
 const STATUS_LABELS = { planning:'规划中', active:'进行中', paused:'已暂停', done:'已完成' };
 const PRIORITY_LABELS = { urgent:'紧急', high:'高', medium:'中', low:'低' };
@@ -1297,6 +1298,13 @@ function lsSavePeople() {
 }
 
 async function loadFromFS() {
+  if (ELECTRON_AVAILABLE) {
+    try {
+      projects = await window.electronAPI.readProjects();
+      projects.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    } catch { projects = []; }
+    return;
+  }
   if (!dataFolderHandle) {
     projects = lsLoadProjects();
     projects.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
@@ -1318,6 +1326,10 @@ async function loadFromFS() {
   projects.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 }
 async function saveProjectToFS(proj) {
+  if (ELECTRON_AVAILABLE) {
+    try { await window.electronAPI.saveProject(proj); } catch (e) { showToast('保存失败：' + e.message, 'error'); throw e; }
+    return;
+  }
   if (!dataFolderHandle) {
     const all = lsLoadProjects();
     const idx = all.findIndex(p => p.id === proj.id);
@@ -1333,6 +1345,10 @@ async function saveProjectToFS(proj) {
   } catch (e) { showToast('保存失败：' + e.message, 'error'); throw e; }
 }
 async function deleteProjectFromFS(proj) {
+  if (ELECTRON_AVAILABLE) {
+    try { await window.electronAPI.deleteProject(proj.id); } catch {}
+    return;
+  }
   if (!dataFolderHandle) { lsDeleteProject(proj.id); return; }
   try { await dataFolderHandle.removeEntry(`project_${proj.id}.json`); } catch {}
 }
@@ -1340,6 +1356,13 @@ function updateFolderUI(connected) {
   const banner = document.getElementById('folder-banner');
   const statusText = document.getElementById('folder-status-text');
   const connectBtn = document.getElementById('connect-folder-btn-wrap');
+  if (ELECTRON_AVAILABLE) {
+    banner.style.display = 'none';
+    statusText.textContent = '✓ 桌面端本地存储';
+    statusText.style.color = 'rgba(255,255,255,0.85)';
+    if (connectBtn) connectBtn.style.display = 'none';
+    return;
+  }
   if (connected) {
     banner.style.display = 'none';
     statusText.textContent = '✓ 数据文件夹已连接（自动）';
@@ -1354,6 +1377,10 @@ function updateFolderUI(connected) {
 
 // ======== PEOPLE FILE SYSTEM ========
 async function loadPeopleFromFS() {
+  if (ELECTRON_AVAILABLE) {
+    try { people = await window.electronAPI.readPeople(); if (!Array.isArray(people)) people = []; } catch { people = []; }
+    return;
+  }
   if (!dataRootHandle) { people = lsLoadPeople(); return; }
   try {
     const fh = await dataRootHandle.getFileHandle('people.json', { create: false });
@@ -1364,6 +1391,10 @@ async function loadPeopleFromFS() {
   } catch { people = lsLoadPeople(); }
 }
 async function savePeopleToFS() {
+  if (ELECTRON_AVAILABLE) {
+    try { await window.electronAPI.savePeople(people); } catch (e) { showToast('保存人员数据失败：' + e.message, 'error'); }
+    return;
+  }
   if (!dataRootHandle) { lsSavePeople(); return; }
   try {
     const fh = await dataRootHandle.getFileHandle('people.json', { create: true });
@@ -1374,10 +1405,34 @@ async function savePeopleToFS() {
 }
 
 // ======== TASK IMAGE HELPERS ========
+// Helper: File -> base64
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 async function loadTaskImagesForEdit(taskId, imageCount) {
   taskEditImages.forEach(img => { try { URL.revokeObjectURL(img.previewUrl); } catch {} });
   taskEditImages = [];
-  if (!taskId || !imageCount || !dataRootHandle) return;
+  if (!taskId || !imageCount) return;
+  if (ELECTRON_AVAILABLE) {
+    for (let i = 1; i <= imageCount; i++) {
+      try {
+        const base64 = await window.electronAPI.readImage(taskId, i);
+        if (base64) {
+          const blob = await fetch(`data:image/jpeg;base64,${base64}`).then(r => r.blob());
+          const url = URL.createObjectURL(blob);
+          taskEditImages.push({ src: 'existing', file: new File([blob], `${taskId}_${i}.jpg`), previewUrl: url });
+        }
+      } catch {}
+    }
+    return;
+  }
+  if (!dataRootHandle) return;
   for (let i = 1; i <= imageCount; i++) {
     try {
       const fh = await dataRootHandle.getFileHandle(`${taskId}_${i}.jpg`);
@@ -1388,6 +1443,22 @@ async function loadTaskImagesForEdit(taskId, imageCount) {
   }
 }
 async function saveTaskImages(taskId, oldImageCount) {
+  if (ELECTRON_AVAILABLE) {
+    // Delete old images
+    for (let i = 1; i <= (oldImageCount || 0); i++) {
+      try { await window.electronAPI.deleteImage(taskId, i); } catch {}
+    }
+    // Save new images
+    let count = 0;
+    for (let i = 0; i < taskEditImages.length; i++) {
+      try {
+        const base64 = await fileToBase64(taskEditImages[i].file);
+        await window.electronAPI.saveImage(taskId, i + 1, base64);
+        count++;
+      } catch {}
+    }
+    return count;
+  }
   if (!dataRootHandle) return 0;
   // Delete all old images
   for (let i = 1; i <= (oldImageCount || 0); i++) {
@@ -1408,7 +1479,20 @@ async function saveTaskImages(taskId, oldImageCount) {
 }
 async function loadTaskImagesForDisplay(taskId, imageCount) {
   const urls = [];
-  if (!taskId || !imageCount || !dataRootHandle) return urls;
+  if (!taskId || !imageCount) return urls;
+  if (ELECTRON_AVAILABLE) {
+    for (let i = 1; i <= imageCount; i++) {
+      try {
+        const base64 = await window.electronAPI.readImage(taskId, i);
+        if (base64) {
+          const blob = await fetch(`data:image/jpeg;base64,${base64}`).then(r => r.blob());
+          urls.push(URL.createObjectURL(blob));
+        }
+      } catch {}
+    }
+    return urls;
+  }
+  if (!dataRootHandle) return urls;
   for (let i = 1; i <= imageCount; i++) {
     try {
       const fh = await dataRootHandle.getFileHandle(`${taskId}_${i}.jpg`);
@@ -2101,7 +2185,7 @@ function askDeleteTask() {
     // Delete image files
     const imgCount = task?.imageCount || 0;
     for (let i = 1; i <= imgCount; i++) {
-      try { if (dataRootHandle) await dataRootHandle.removeEntry(`${viewingTaskId}_${i}.jpg`); } catch {}
+      try { if (ELECTRON_AVAILABLE) await window.electronAPI.deleteImage(viewingTaskId, i); else if (dataRootHandle) await dataRootHandle.removeEntry(`${viewingTaskId}_${i}.jpg`); } catch {}
     }
     p.tasks = (p.tasks||[]).filter(t=>t.id!==viewingTaskId);
     for (const sp of (p.subProjects||[])) sp.tasks = (sp.tasks||[]).filter(t=>t.id!==viewingTaskId);
@@ -2483,7 +2567,7 @@ function deleteTaskFromCard(projectId, taskId, taskTitle) {
     const task = (proj.tasks||[]).find(t=>t.id===taskId) || (proj.subProjects||[]).flatMap(sp=>sp.tasks||[]).find(t=>t.id===taskId);
     const imgCount = task?.imageCount || 0;
     for (let i = 1; i <= imgCount; i++) {
-      try { if (dataRootHandle) await dataRootHandle.removeEntry(`${taskId}_${i}.jpg`); } catch {}
+      try { if (ELECTRON_AVAILABLE) await window.electronAPI.deleteImage(taskId, i); else if (dataRootHandle) await dataRootHandle.removeEntry(`${taskId}_${i}.jpg`); } catch {}
     }
     proj.tasks = (proj.tasks||[]).filter(t=>t.id!==taskId);
     for (const sp of (proj.subProjects||[])) sp.tasks = (sp.tasks||[]).filter(t=>t.id!==taskId);
@@ -3080,13 +3164,18 @@ async function init() {
   document.documentElement.setAttribute('data-theme', savedTheme);
   document.getElementById('theme-icon-sun').style.display = savedTheme === 'dark' ? 'block' : 'none';
   document.getElementById('theme-icon-moon').style.display = savedTheme === 'dark' ? 'none' : 'block';
-  await tryRestoreFolder();
-  updateFolderUI(!!dataFolderHandle);
-  // If FSA available but no folder connected yet, show banner once to guide user
-  if (FSA_AVAILABLE && !dataFolderHandle) {
-    const hasStoredHandle = await idbGet('rootFolderHandle');
-    if (!hasStoredHandle) {
-      document.getElementById('folder-banner').style.display = 'flex';
+  if (ELECTRON_AVAILABLE) {
+    // Electron: 直接使用本地文件系统，无需 FSA
+    updateFolderUI(true);
+  } else {
+    await tryRestoreFolder();
+    updateFolderUI(!!dataFolderHandle);
+    // If FSA available but no folder connected yet, show banner once to guide user
+    if (FSA_AVAILABLE && !dataFolderHandle) {
+      const hasStoredHandle = await idbGet('rootFolderHandle');
+      if (!hasStoredHandle) {
+        document.getElementById('folder-banner').style.display = 'flex';
+      }
     }
   }
   await loadFromFS();
