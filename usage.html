@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使用时长统计</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0eeea;
+  --border: rgba(30,30,30,0.1);
+  --border2: rgba(30,30,30,0.18);
+  --text: #1a1a1a;
+  --text2: #5a5a5a;
+  --text3: #999;
+  --accent: #1F4E79;
+  --accent2: #2E75B6;
+  --accent-light: #e8f0f8;
+  --accent-mid: #b8d0ea;
+  --green: #2d6a4f;
+  --green-bg: #e8f5ee;
+  --amber: #92400e;
+  --amber-bg: #fef3c7;
+  --red: #9b1c1c;
+  --red-bg: #fee2e2;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  --shadow2: 0 8px 32px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #283548;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --accent: #2563eb;
+  --accent2: #60a5fa;
+  --accent-light: #1e3252;
+  --accent-mid: rgba(96,165,250,0.2);
+  --green: #4ade80;
+  --green-bg: #052e16;
+  --amber: #fbbf24;
+  --amber-bg: #1c1400;
+  --red: #f87171;
+  --red-bg: #2d0000;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+  --shadow2: 0 8px 32px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .sidebar { background: #1e3252; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ======== LAYOUT ======== */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 240px;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: var(--transition);
+}
+.sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.sidebar-logo h1 { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; letter-spacing: 0.3px; line-height: 1.3; color: #fff; }
+.sidebar-logo p { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; letter-spacing: 0.8px; text-transform: uppercase; }
+.sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 24px; cursor: pointer; color: rgba(255,255,255,0.65); font-size: 13.5px; transition: var(--transition); border-left: 3px solid transparent; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-item.active { color: #fff; background: rgba(255,255,255,0.12); border-left-color: rgba(255,255,255,0.7); }
+.nav-icon { width: 18px; height: 18px; opacity: 0.9; flex-shrink: 0; }
+.sidebar-switch { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; flex-direction: column; gap: 4px; }
+.switch-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.8px; text-transform: uppercase; padding: 0 8px; margin-bottom: 2px; }
+.switch-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--radius-sm); font-size: 12.5px; color: rgba(255,255,255,0.55); text-decoration: none; transition: var(--transition); cursor: pointer; }
+.switch-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.switch-item.active { background: rgba(255,255,255,0.12); color: #fff; }
+.switch-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.sidebar-footer { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 10px; color: rgba(255,255,255,0.3); text-align: center; }
+
+.main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 56px; background: var(--surface);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-title { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.theme-toggle { width: 36px; height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+.theme-toggle:hover { background: var(--surface2); color: var(--text); }
+.content { flex: 1; padding: 28px 32px; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ======== TOAST ======== */
+.toast { position: fixed; top: 20px; right: 20px; background: var(--surface); color: var(--text); padding: 12px 24px; border-radius: var(--radius); box-shadow: var(--shadow2); border: 1px solid var(--border); font-size: 13px; z-index: 9999; opacity: 0; transform: translateY(-16px); transition: all 0.3s ease; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.toast.success { border-left: 4px solid var(--green); }
+.toast.error { border-left: 4px solid var(--red); }
+
+/* ======== SEARCH BOX ======== */
+.search-box { position: relative; }
+.search-box input { padding: 7px 12px 7px 32px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 12.5px; font-family: inherit; width: 180px; transition: var(--transition); }
+.search-box input:focus { outline: none; border-color: var(--accent); background: var(--surface); width: 220px; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+
+/* ======== FILTER SELECT ======== */
+.filter-select { padding: 7px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 12.5px; font-family: inherit; cursor: pointer; }
+
+/* ======== SETTINGS STYLES ======== */
+.settings-section { background: var(--surface); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px; }
+.settings-section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.settings-row:last-child { border-bottom: none; }
+.settings-row-label { font-size: 13px; color: var(--text); }
+.settings-row-label small { display: block; font-size: 11px; color: var(--text3); margin-top: 2px; }
+.settings-row-value { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.settings-btn { padding: 8px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; transition: var(--transition); }
+.settings-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+.settings-btn-danger { color: var(--red); border-color: var(--red); }
+.settings-btn-danger:hover { background: var(--red-bg); color: var(--red); }
+
+/* ======== USAGE TRACKING MODULE ======== */
+.usage-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.usage-time-tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: var(--radius-sm); padding: 3px; }
+.usage-time-tab { padding: 6px 14px; border-radius: 6px; border: none; background: transparent; color: var(--text2); font-size: 12.5px; font-family: inherit; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+.usage-time-tab:hover { color: var(--text); }
+.usage-time-tab.active { background: var(--surface); color: var(--accent); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.usage-custom-date { display: flex; align-items: center; gap: 6px; }
+.usage-custom-date input { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font-size: 12px; font-family: inherit; }
+.usage-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.usage-stat-card { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.usage-stat-card .stat-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.usage-stat-card .stat-value { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.usage-stat-card .stat-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.usage-charts-section { margin-bottom: 24px; }
+.usage-chart-tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+.usage-chart-tab { padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 12.5px; font-family: inherit; cursor: pointer; transition: var(--transition); }
+.usage-chart-tab:hover { border-color: var(--accent2); color: var(--text); }
+.usage-chart-tab.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.usage-chart-container { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); min-height: 380px; }
+.usage-chart-box { width: 100%; height: 360px; }
+.usage-list-section { margin-bottom: 24px; }
+.usage-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.usage-list-header h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.usage-sort-select { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface); color: var(--text2); font-size: 12px; font-family: inherit; }
+.usage-app-list { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
+.usage-app-row { display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); transition: var(--transition); cursor: pointer; gap: 14px; }
+.usage-app-row:last-child { border-bottom: none; }
+.usage-app-row:hover { background: var(--surface2); }
+.usage-app-icon { width: 36px; height: 36px; border-radius: 8px; object-fit: contain; flex-shrink: 0; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.usage-app-icon img { width: 100%; height: 100%; object-fit: contain; }
+.usage-app-icon .icon-placeholder { width: 36px; height: 36px; border-radius: 8px; background: var(--accent-light); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 14px; font-weight: 700; }
+.usage-app-info { flex: 1; min-width: 0; }
+.usage-app-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.usage-app-path { font-size: 11px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
+.usage-app-stats { display: flex; gap: 24px; align-items: center; flex-shrink: 0; }
+.usage-app-stat { text-align: center; }
+.usage-app-stat .stat-val { font-size: 14px; font-weight: 600; color: var(--text); }
+.usage-app-stat .stat-lbl { font-size: 10.5px; color: var(--text3); }
+.usage-app-bar { width: 120px; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.usage-app-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.3s ease; }
+.usage-app-sessions { padding: 0 20px 14px 70px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.usage-session-item { display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: 12px; color: var(--text2); }
+.usage-session-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.usage-empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+.usage-empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
+.usage-empty p { font-size: 14px; margin-bottom: 4px; }
+.usage-empty small { font-size: 12px; }
+.usage-tracking-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.usage-tracking-badge.running { background: var(--green-bg); color: var(--green); }
+.usage-tracking-badge.stopped { background: var(--red-bg); color: var(--red); }
+.usage-tracking-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.5s ease-in-out infinite; }
+.usage-tracking-badge.stopped .usage-tracking-dot { animation: none; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.usage-actions-bar { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.usage-btn { padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); color: var(--text2); font-size: 12px; font-family: inherit; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 5px; }
+.usage-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.usage-btn-danger { color: var(--red); border-color: var(--red); }
+.usage-btn-danger:hover { background: var(--red-bg); color: var(--red); }
+@media (max-width: 1100px) { .usage-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h1>使用时长统计</h1>
+      <p>App Usage Tracker</p>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" data-view="overview" onclick="showView('overview')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        统计总览
+      </div>
+      <div class="nav-item" data-view="apps" onclick="showView('apps')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        应用详情
+      </div>
+      <div class="nav-item" data-view="charts" onclick="showView('charts')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+        图表分析
+      </div>
+      <div class="nav-item" data-view="settings" onclick="showView('settings')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        设置
+      </div>
+    </div>
+    <div class="sidebar-switch">
+      <div class="switch-label">切换系统</div>
+      <a class="switch-item" href="Index.html">
+        <span class="switch-dot"></span>
+        工作复盘
+      </a>
+      <a class="switch-item" href="kanban.html">
+        <span class="switch-dot"></span>
+        项目看板
+      </a>
+      <span class="switch-item active">
+        <span class="switch-dot"></span>
+        使用时长
+      </span>
+    </div>
+    <div class="sidebar-footer">
+      数据存储于本地
+    </div>
+  </nav>
+
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title" id="topbar-title">统计总览</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+          <svg id="theme-icon-sun" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg id="theme-icon-moon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- OVERVIEW VIEW -->
+      <div id="view-overview" class="view active">
+        <div id="overview-content"></div>
+      </div>
+
+      <!-- APPS VIEW -->
+      <div id="view-apps" class="view">
+        <div id="apps-content"></div>
+      </div>
+
+      <!-- CHARTS VIEW -->
+      <div id="view-charts" class="view">
+        <div id="charts-content"></div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div id="view-settings" class="view">
+        <div id="settings-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="./node_modules/echarts/dist/echarts.min.js"></script>
+<script>
+// ======== STATE ========
+const ELECTRON_AVAILABLE = !!(window.electronAPI);
+let currentView = 'overview';
+let usageData = {};
+let usageIcons = {};
+let usageTimeDim = 'today';
+let usageCustomStart = '';
+let usageCustomEnd = '';
+let usageChartType = 'pie';
+let usageSortBy = 'time-desc';
+let usageSearchQuery = '';
+let usageExpandedApp = null;
+let usageChartInstance = null;
+let usageRefreshTimer = null;
+let usageSelectedLineApp = null;
+
+// ======== UTILITIES ========
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = 'toast', 2500);
+}
+
+function formatDuration(totalSec) {
+  if (!totalSec || totalSec <= 0) return '0s';
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function getUsageDateRange() {
+  const today = new Date();
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  if (usageTimeDim === 'today') { const s = fmt(today); return { start: s, end: s }; }
+  else if (usageTimeDim === 'yesterday') { const y = new Date(today); y.setDate(y.getDate()-1); const s = fmt(y); return { start: s, end: s }; }
+  else if (usageTimeDim === 'week') { const s = new Date(today); s.setDate(s.getDate()-6); return { start: fmt(s), end: fmt(today) }; }
+  else if (usageTimeDim === 'month') { const s = new Date(today); s.setDate(s.getDate()-29); return { start: fmt(s), end: fmt(today) }; }
+  else { return { start: usageCustomStart || fmt(today), end: usageCustomEnd || fmt(today) }; }
+}
+
+function aggregateUsageData(rawData) {
+  const apps = {};
+  const dailyBreakdown = {};
+  for (const [dateStr, dayData] of Object.entries(rawData)) {
+    if (!dayData || !dayData.apps) continue;
+    dailyBreakdown[dateStr] = {};
+    for (const [appName, appInfo] of Object.entries(dayData.apps)) {
+      dailyBreakdown[dateStr][appName] = appInfo.totalSeconds || 0;
+      if (!apps[appName]) {
+        apps[appName] = { name: appInfo.name || appName, exePath: appInfo.exePath || '', totalSeconds: 0, launches: 0, sessions: [] };
+      }
+      apps[appName].totalSeconds += (appInfo.totalSeconds || 0);
+      apps[appName].launches += (appInfo.launches || 0);
+      if (appInfo.sessions) apps[appName].sessions.push(...appInfo.sessions.map(s => ({ ...s, date: dateStr })));
+      if (appInfo.exePath && !apps[appName].exePath) apps[appName].exePath = appInfo.exePath;
+    }
+  }
+  return { apps, dailyBreakdown };
+}
+
+async function loadUsageIcons(appNames, appsData) {
+  if (!ELECTRON_AVAILABLE) return;
+  const toLoad = appNames.filter(n => !usageIcons[n]);
+  await Promise.all(toLoad.map(async name => {
+    try {
+      const base64 = await window.electronAPI.getAppIcon(name, appsData[name]?.exePath || '');
+      if (base64) usageIcons[name] = base64;
+    } catch {}
+  }));
+}
+
+function getAppIconHtml(appName, size) {
+  const sz = size || 36;
+  if (usageIcons[appName]) {
+    return `<div class="usage-app-icon" style="width:${sz}px;height:${sz}px"><img src="data:image/png;base64,${usageIcons[appName]}" alt="${escHtml(appName)}"></div>`;
+  }
+  const initial = (appName || '?').charAt(0).toUpperCase();
+  return `<div class="usage-app-icon" style="width:${sz}px;height:${sz}px"><div class="icon-placeholder" style="width:${sz}px;height:${sz}px">${initial}</div></div>`;
+}
+
+async function fetchUsageData() {
+  if (!ELECTRON_AVAILABLE) return;
+  const range = getUsageDateRange();
+  try { usageData = await window.electronAPI.getUsageData(range.start, range.end); } catch { usageData = {}; }
+}
+
+function getSortedAppList(apps) {
+  let appList = Object.values(apps);
+  if (usageSearchQuery) {
+    const q = usageSearchQuery.toLowerCase();
+    appList = appList.filter(a => a.name.toLowerCase().includes(q) || (a.exePath||'').toLowerCase().includes(q));
+  }
+  if (usageSortBy === 'time-desc') appList.sort((a,b) => b.totalSeconds - a.totalSeconds);
+  else if (usageSortBy === 'time-asc') appList.sort((a,b) => a.totalSeconds - b.totalSeconds);
+  else if (usageSortBy === 'name') appList.sort((a,b) => a.name.localeCompare(b.name));
+  else if (usageSortBy === 'launches') appList.sort((a,b) => b.launches - a.launches);
+  return appList;
+}
+
+// ======== VIEW NAVIGATION ========
+function showView(view) {
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const viewEl = document.getElementById('view-' + view);
+  if (viewEl) viewEl.classList.add('active');
+  const navEl = document.querySelector(`[data-view="${view}"]`);
+  if (navEl) navEl.classList.add('active');
+  const titles = { overview:'统计总览', apps:'应用详情', charts:'图表分析', settings:'设置' };
+  document.getElementById('topbar-title').textContent = titles[view] || '';
+  renderCurrentView();
+}
+
+function renderCurrentView() {
+  if (currentView === 'overview') renderOverview();
+  else if (currentView === 'apps') renderAppsView();
+  else if (currentView === 'charts') renderChartsView();
+  else if (currentView === 'settings') renderSettingsView();
+}
+
+// ======== TIME DIMENSION TABS HTML ========
+function getTimeTabsHtml() {
+  const timeTabs = ['today','yesterday','week','month','custom'].map(t => {
+    const labels = { today:'今日', yesterday:'昨日', week:'近7天', month:'近30天', custom:'自定义' };
+    return `<button class="usage-time-tab ${usageTimeDim===t?'active':''}" onclick="switchUsageTime('${t}')">${labels[t]}</button>`;
+  }).join('');
+  const customDateHtml = usageTimeDim === 'custom' ? `
+    <div class="usage-custom-date">
+      <input type="date" value="${usageCustomStart}" onchange="usageCustomStart=this.value;refreshAll()">
+      <span style="color:var(--text3)">~</span>
+      <input type="date" value="${usageCustomEnd}" onchange="usageCustomEnd=this.value;refreshAll()">
+    </div>` : '';
+  return `<div class="usage-time-tabs">${timeTabs}</div>${customDateHtml}`;
+}
+
+function getTrackingControlsHtml(trackingStatus) {
+  const statusBadge = trackingStatus.isRunning
+    ? `<span class="usage-tracking-badge running"><span class="usage-tracking-dot"></span> 采集中</span>`
+    : `<span class="usage-tracking-badge stopped"><span class="usage-tracking-dot"></span> 已停止</span>`;
+  return `${statusBadge}
+    <div class="usage-actions-bar">
+      <button class="usage-btn" onclick="toggleTracking()">
+        ${trackingStatus.isRunning
+          ? '<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 暂停采集'
+          : '<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg> 开始采集'}
+      </button>
+      <button class="usage-btn" onclick="refreshAll()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> 刷新
+      </button>
+      <button class="usage-btn" onclick="exportUsageData()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> 导出
+      </button>
+    </div>`;
+}
+
+// ======== OVERVIEW VIEW ========
+async function renderOverview() {
+  if (!ELECTRON_AVAILABLE) {
+    document.getElementById('overview-content').innerHTML = '<div class="usage-empty"><p>使用时长统计仅在桌面应用中可用</p></div>';
+    return;
+  }
+  let trackingStatus = { isRunning: false };
+  try { trackingStatus = await window.electronAPI.getTrackingStatus(); } catch {}
+  await fetchUsageData();
+  const { apps, dailyBreakdown } = aggregateUsageData(usageData);
+  await loadUsageIcons(Object.keys(apps), apps);
+  const appList = getSortedAppList(apps);
+  const totalSeconds = appList.reduce((s,a) => s + a.totalSeconds, 0);
+  const topApp = appList.length > 0 ? appList.reduce((max,a) => a.totalSeconds > max.totalSeconds ? a : max, appList[0]) : null;
+
+  document.getElementById('overview-content').innerHTML = `
+    <div class="usage-controls">
+      ${getTimeTabsHtml()}
+      ${getTrackingControlsHtml(trackingStatus)}
+    </div>
+    <div class="usage-stats-grid">
+      <div class="usage-stat-card">
+        <div class="stat-label">总使用时长</div>
+        <div class="stat-value">${formatDuration(totalSeconds)}</div>
+        <div class="stat-sub">${Object.keys(usageData).length} 天数据</div>
+      </div>
+      <div class="usage-stat-card">
+        <div class="stat-label">活跃应用</div>
+        <div class="stat-value">${appList.length}</div>
+        <div class="stat-sub">个应用被使用</div>
+      </div>
+      <div class="usage-stat-card">
+        <div class="stat-label">最常用应用</div>
+        <div class="stat-value" style="font-size:18px;display:flex;align-items:center;gap:8px">${topApp ? getAppIconHtml(topApp.name, 28) + escHtml(topApp.name) : '-'}</div>
+        <div class="stat-sub">${topApp ? formatDuration(topApp.totalSeconds) : ''}</div>
+      </div>
+      <div class="usage-stat-card">
+        <div class="stat-label">总启动次数</div>
+        <div class="stat-value">${appList.reduce((s,a) => s+a.launches, 0)}</div>
+        <div class="stat-sub">次应用启动</div>
+      </div>
+    </div>
+    <div class="usage-charts-section">
+      <div class="usage-chart-container">
+        <div id="overview-pie-chart" class="usage-chart-box"></div>
+      </div>
+    </div>
+    <div class="usage-list-section">
+      <div class="usage-list-header"><h3>TOP 10 应用</h3></div>
+      ${renderAppListHtml(appList.slice(0, 10), totalSeconds)}
+    </div>
+  `;
+
+  // 渲染饼图
+  renderPieChart('overview-pie-chart', apps, appList.slice(0, 10));
+  setupAutoRefresh();
+}
+
+// ======== APPS VIEW ========
+async function renderAppsView() {
+  if (!ELECTRON_AVAILABLE) {
+    document.getElementById('apps-content').innerHTML = '<div class="usage-empty"><p>使用时长统计仅在桌面应用中可用</p></div>';
+    return;
+  }
+  await fetchUsageData();
+  const { apps } = aggregateUsageData(usageData);
+  await loadUsageIcons(Object.keys(apps), apps);
+  const appList = getSortedAppList(apps);
+  const totalSeconds = appList.reduce((s,a) => s + a.totalSeconds, 0);
+
+  document.getElementById('apps-content').innerHTML = `
+    <div class="usage-controls">
+      ${getTimeTabsHtml()}
+      <div class="search-box" style="margin-left:8px">
+        <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" placeholder="搜索应用..." value="${escHtml(usageSearchQuery)}" oninput="usageSearchQuery=this.value;renderAppsView()">
+      </div>
+      <select class="filter-select" onchange="usageSortBy=this.value;renderAppsView()">
+        <option value="time-desc" ${usageSortBy==='time-desc'?'selected':''}>时长降序</option>
+        <option value="time-asc" ${usageSortBy==='time-asc'?'selected':''}>时长升序</option>
+        <option value="name" ${usageSortBy==='name'?'selected':''}>名称排序</option>
+        <option value="launches" ${usageSortBy==='launches'?'selected':''}>启动次数</option>
+      </select>
+    </div>
+    ${appList.length === 0
+      ? `<div class="usage-empty">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p>暂无统计数据</p><small>请先运行应用一段时间，数据会自动采集</small>
+        </div>`
+      : renderAppListHtml(appList, totalSeconds, true)}
+  `;
+}
+
+function renderAppListHtml(appList, totalSeconds, showSessions) {
+  if (appList.length === 0) return '';
+  const maxSec = appList[0]?.totalSeconds || 1;
+  let html = '<div class="usage-app-list">';
+  for (const app of appList) {
+    const pct = maxSec > 0 ? Math.round(app.totalSeconds / maxSec * 100) : 0;
+    const timePct = totalSeconds > 0 ? Math.round(app.totalSeconds / totalSeconds * 100) : 0;
+    const avgSession = app.launches > 0 ? Math.round(app.totalSeconds / app.launches) : 0;
+    const clickAttr = showSessions ? `onclick="toggleUsageExpand('${escHtml(app.name)}')"` : '';
+    html += `<div class="usage-app-row" ${clickAttr}>
+      ${getAppIconHtml(app.name)}
+      <div class="usage-app-info">
+        <div class="usage-app-name">${escHtml(app.name)}</div>
+        <div class="usage-app-path">${escHtml(app.exePath)}</div>
+      </div>
+      <div class="usage-app-stats">
+        <div class="usage-app-stat"><div class="stat-val">${formatDuration(app.totalSeconds)}</div><div class="stat-lbl">总时长 (${timePct}%)</div></div>
+        <div class="usage-app-stat"><div class="stat-val">${formatDuration(avgSession)}</div><div class="stat-lbl">平均/次</div></div>
+        <div class="usage-app-stat"><div class="stat-val">${app.launches}</div><div class="stat-lbl">启动次数</div></div>
+      </div>
+      <div class="usage-app-bar"><div class="usage-app-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+    if (showSessions && usageExpandedApp === app.name && app.sessions && app.sessions.length > 0) {
+      html += '<div class="usage-app-sessions">';
+      const recent = app.sessions.slice(-20);
+      for (const sess of recent) {
+        html += `<div class="usage-session-item"><span class="usage-session-dot"></span> ${sess.date ? sess.date + ' ' : ''}${sess.start} ~ ${sess.end}</div>`;
+      }
+      if (app.sessions.length > 20) html += `<div class="usage-session-item" style="color:var(--text3)">... 还有 ${app.sessions.length - 20} 条记录</div>`;
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+// ======== CHARTS VIEW ========
+async function renderChartsView() {
+  if (!ELECTRON_AVAILABLE) {
+    document.getElementById('charts-content').innerHTML = '<div class="usage-empty"><p>使用时长统计仅在桌面应用中可用</p></div>';
+    return;
+  }
+  await fetchUsageData();
+  const { apps, dailyBreakdown } = aggregateUsageData(usageData);
+  await loadUsageIcons(Object.keys(apps), apps);
+  const appList = getSortedAppList(apps);
+
+  const chartTabs = ['pie','bar','line'].map(t => {
+    const labels = { pie:'饼图 - 应用占比', bar:'柱状图 - 每日对比', line:'折线图 - 使用趋势' };
+    return `<button class="usage-chart-tab ${usageChartType===t?'active':''}" onclick="switchUsageChart('${t}')">${labels[t]}</button>`;
+  }).join('');
+
+  let lineAppSelector = '';
+  if (usageChartType === 'line') {
+    const top10 = appList.slice(0, 10);
+    if (!usageSelectedLineApp && top10.length > 0) usageSelectedLineApp = top10[0].name;
+    lineAppSelector = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">';
+    for (const a of top10) {
+      const isActive = a.name === usageSelectedLineApp;
+      lineAppSelector += `<button onclick="usageSelectedLineApp='${escHtml(a.name)}';renderChartsView()" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid ${isActive?'var(--accent)':'var(--border)'};background:${isActive?'var(--accent-light)':'var(--surface)'};color:${isActive?'var(--accent)':'var(--text2)'};font-size:11px;cursor:pointer;font-family:inherit">`;
+      if (usageIcons[a.name]) lineAppSelector += `<img src="data:image/png;base64,${usageIcons[a.name]}" width="14" height="14" style="border-radius:3px">`;
+      lineAppSelector += `${escHtml(a.name)}</button>`;
+    }
+    lineAppSelector += '</div>';
+  }
+
+  document.getElementById('charts-content').innerHTML = `
+    <div class="usage-controls">
+      ${getTimeTabsHtml()}
+    </div>
+    <div class="usage-charts-section">
+      <div class="usage-chart-tabs">${chartTabs}</div>
+      <div class="usage-chart-container">
+        <div id="charts-main-chart" class="usage-chart-box"></div>
+        ${lineAppSelector}
+      </div>
+    </div>
+  `;
+
+  renderMainChart('charts-main-chart', apps, dailyBreakdown, appList);
+}
+
+function renderPieChart(domId, apps, appList) {
+  const chartDom = document.getElementById(domId);
+  if (!chartDom || typeof echarts === 'undefined') return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const chart = echarts.init(chartDom, isDark ? 'dark' : null);
+  const colors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: p => {
+        const icon = usageIcons[p.name] ? `<img src="data:image/png;base64,${usageIcons[p.name]}" width="20" height="20" style="vertical-align:middle;margin-right:6px;border-radius:4px">` : '';
+        return `${icon}<b>${p.name}</b><br/>时长：${formatDuration(p.value)}<br/>占比：${p.percent}%`;
+      }
+    },
+    legend: {
+      orient: 'vertical', right: 20, top: 'center',
+      textStyle: { color: isDark ? '#94a3b8' : '#5a5a5a', fontSize: 12 },
+      formatter: name => {
+        const a = apps[name]; const total = Object.values(apps).reduce((s,x) => s + x.totalSeconds, 0);
+        return `${name}  ${total > 0 ? Math.round((a?.totalSeconds||0)/total*100) : 0}%`;
+      }
+    },
+    series: [{
+      type: 'pie', radius: ['40%','70%'], center: ['35%','50%'],
+      avoidLabelOverlap: true,
+      itemStyle: { borderRadius: 6, borderColor: isDark ? '#1e293b' : '#fff', borderWidth: 2 },
+      label: { show: false },
+      emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' }, itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } },
+      data: appList.map((a,i) => ({ name: a.name, value: a.totalSeconds, itemStyle: { color: colors[i % colors.length] } }))
+    }]
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+function renderMainChart(domId, apps, dailyBreakdown, appList) {
+  const chartDom = document.getElementById(domId);
+  if (!chartDom || typeof echarts === 'undefined') return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (usageChartInstance) usageChartInstance.dispose();
+  usageChartInstance = echarts.init(chartDom, isDark ? 'dark' : null);
+  const colors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
+  const top10 = appList.slice(0, 10);
+
+  if (usageChartType === 'pie') {
+    usageChartInstance.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'item',
+        formatter: p => {
+          const icon = usageIcons[p.name] ? `<img src="data:image/png;base64,${usageIcons[p.name]}" width="20" height="20" style="vertical-align:middle;margin-right:6px;border-radius:4px">` : '';
+          return `${icon}<b>${p.name}</b><br/>时长：${formatDuration(p.value)}<br/>占比：${p.percent}%`;
+        }
+      },
+      legend: {
+        orient: 'vertical', right: 20, top: 'center',
+        textStyle: { color: isDark ? '#94a3b8' : '#5a5a5a', fontSize: 12 },
+        formatter: name => {
+          const a = apps[name]; const total = Object.values(apps).reduce((s,x) => s + x.totalSeconds, 0);
+          return `${name}  ${total > 0 ? Math.round((a?.totalSeconds||0)/total*100) : 0}%`;
+        }
+      },
+      series: [{ type: 'pie', radius: ['40%','70%'], center: ['35%','50%'], avoidLabelOverlap: true,
+        itemStyle: { borderRadius: 6, borderColor: isDark ? '#1e293b' : '#fff', borderWidth: 2 },
+        label: { show: false },
+        emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+        data: top10.map((a,i) => ({ name: a.name, value: a.totalSeconds, itemStyle: { color: colors[i % colors.length] } }))
+      }]
+    });
+  } else if (usageChartType === 'bar') {
+    const dates = Object.keys(dailyBreakdown).sort();
+    const topApps = top10.map(a => a.name);
+    usageChartInstance.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis', axisPointer: { type: 'shadow' },
+        formatter: params => {
+          let html = `<b>${params[0].axisValue}</b><br/>`;
+          for (const p of params) {
+            if (p.value > 0) {
+              const icon = usageIcons[p.seriesName] ? `<img src="data:image/png;base64,${usageIcons[p.seriesName]}" width="16" height="16" style="vertical-align:middle;margin-right:4px;border-radius:3px">` : '';
+              html += `${icon}${p.marker}${p.seriesName}：${formatDuration(p.value)}<br/>`;
+            }
+          }
+          return html;
+        }
+      },
+      legend: { data: topApps, bottom: 0, textStyle: { color: isDark ? '#94a3b8' : '#5a5a5a', fontSize: 11 } },
+      grid: { left: 60, right: 20, top: 20, bottom: 50 },
+      xAxis: { type: 'category', data: dates.map(d => d.slice(5)), axisLabel: { color: isDark ? '#64748b' : '#999', fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { color: isDark ? '#64748b' : '#999', fontSize: 11, formatter: val => formatDuration(val) } },
+      series: topApps.map((name, i) => ({
+        name, type: 'bar', stack: 'total', emphasis: { focus: 'series' },
+        itemStyle: { color: colors[i % colors.length] },
+        data: dates.map(d => dailyBreakdown[d]?.[name] || 0)
+      }))
+    });
+  } else if (usageChartType === 'line') {
+    const dates = Object.keys(dailyBreakdown).sort();
+    if (!usageSelectedLineApp && top10.length > 0) usageSelectedLineApp = top10[0].name;
+    const sel = usageSelectedLineApp;
+    const appColor = colors[top10.findIndex(a => a.name === sel) % colors.length] || colors[0];
+    usageChartInstance.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        formatter: params => {
+          const p = params[0];
+          const icon = usageIcons[sel] ? `<img src="data:image/png;base64,${usageIcons[sel]}" width="18" height="18" style="vertical-align:middle;margin-right:6px;border-radius:4px">` : '';
+          return `${icon}<b>${sel}</b><br/>${p.axisValue}：${formatDuration(p.value)}`;
+        }
+      },
+      grid: { left: 60, right: 20, top: 30, bottom: 40 },
+      xAxis: { type: 'category', data: dates.map(d => d.slice(5)), axisLabel: { color: isDark ? '#64748b' : '#999', fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { color: isDark ? '#64748b' : '#999', fontSize: 11, formatter: val => formatDuration(val) } },
+      series: [{ name: sel, type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
+        lineStyle: { width: 3, color: appColor }, itemStyle: { color: appColor },
+        areaStyle: { color: { type: 'linear', x:0, y:0, x2:0, y2:1, colorStops: [{ offset:0, color: appColor+'40' }, { offset:1, color: appColor+'05' }] } },
+        data: dates.map(d => dailyBreakdown[d]?.[sel] || 0)
+      }]
+    });
+  }
+  usageChartInstance.resize();
+  window.addEventListener('resize', () => { if (usageChartInstance) usageChartInstance.resize(); });
+}
+
+// ======== SETTINGS VIEW ========
+async function renderSettingsView() {
+  let config = { trackingEnabled: true, intervalMs: 1000, excludedApps: [], retentionDays: 180 };
+  let trackingStatus = { isRunning: false };
+  if (ELECTRON_AVAILABLE) {
+    try { config = await window.electronAPI.getTrackingConfig(); } catch {}
+    try { trackingStatus = await window.electronAPI.getTrackingStatus(); } catch {}
+  }
+
+  document.getElementById('settings-content').innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-title">采集设置</div>
+      <div class="settings-row">
+        <div class="settings-row-label">自动采集<small>应用启动时自动开始采集使用时长</small></div>
+        <div class="settings-row-value">
+          <button class="settings-btn ${config.trackingEnabled !== false ? 'active' : ''}" onclick="toggleAutoTracking()" style="${config.trackingEnabled !== false ? 'background:var(--green-bg);color:var(--green);border-color:var(--green)' : ''}">${config.trackingEnabled !== false ? '已开启' : '已关闭'}</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">采集频率<small>检测前台应用的时间间隔（毫秒）</small></div>
+        <div class="settings-row-value">
+          <select class="filter-select" id="cfg-interval" onchange="saveConfigField('intervalMs', Number(this.value))">
+            <option value="500" ${config.intervalMs===500?'selected':''}>500ms</option>
+            <option value="1000" ${config.intervalMs===1000?'selected':''}>1000ms (推荐)</option>
+            <option value="2000" ${config.intervalMs===2000?'selected':''}>2000ms</option>
+            <option value="5000" ${config.intervalMs===5000?'selected':''}>5000ms</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">数据保留周期<small>超过该天数的数据将在清理时被移除</small></div>
+        <div class="settings-row-value">
+          <select class="filter-select" id="cfg-retention" onchange="saveConfigField('retentionDays', Number(this.value))">
+            <option value="30" ${config.retentionDays===30?'selected':''}>30 天</option>
+            <option value="90" ${config.retentionDays===90?'selected':''}>90 天</option>
+            <option value="180" ${config.retentionDays===180?'selected':''}>180 天 (默认)</option>
+            <option value="365" ${config.retentionDays===365?'selected':''}>365 天</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">排除的应用<small>这些应用不会被统计（进程名，逗号分隔）</small></div>
+        <div class="settings-row-value" style="flex-direction:column;align-items:flex-end;gap:6px">
+          <textarea id="cfg-excluded" style="width:300px;height:60px;padding:8px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;font-family:inherit;resize:vertical">${(config.excludedApps||[]).join(', ')}</textarea>
+          <button class="settings-btn" onclick="saveExcludedApps()">保存排除列表</button>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">数据管理</div>
+      <div class="settings-row">
+        <div class="settings-row-label">清除所有使用数据<small>仅清除时长数据，保留图标缓存</small></div>
+        <div class="settings-row-value">
+          <button class="settings-btn settings-btn-danger" onclick="clearAllData(false)">清除时长数据</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">清除所有数据和图标<small>清除时长数据及应用图标缓存</small></div>
+        <div class="settings-row-value">
+          <button class="settings-btn settings-btn-danger" onclick="clearAllData(true)">清除全部</button>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">主题</div>
+      <div class="settings-row">
+        <div class="settings-row-label">界面主题</div>
+        <div class="settings-row-value">
+          <button class="settings-btn" onclick="setTheme('light')" style="${document.documentElement.getAttribute('data-theme')!=='dark'?'background:var(--accent-light);color:var(--accent);border-color:var(--accent)':''}">浅色</button>
+          <button class="settings-btn" onclick="setTheme('dark')" style="${document.documentElement.getAttribute('data-theme')==='dark'?'background:var(--accent-light);color:var(--accent);border-color:var(--accent)':''}">深色</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ======== ACTIONS ========
+function switchUsageTime(dim) {
+  usageTimeDim = dim;
+  if (dim === 'custom' && !usageCustomStart) {
+    const today = new Date();
+    const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    usageCustomEnd = fmt(today);
+    const s = new Date(today); s.setDate(s.getDate()-6);
+    usageCustomStart = fmt(s);
+  }
+  renderCurrentView();
+}
+
+function switchUsageChart(type) {
+  usageChartType = type;
+  renderChartsView();
+}
+
+function toggleUsageExpand(appName) {
+  usageExpandedApp = usageExpandedApp === appName ? null : appName;
+  renderAppsView();
+}
+
+async function refreshAll() {
+  await renderCurrentView();
+}
+
+function setupAutoRefresh() {
+  clearInterval(usageRefreshTimer);
+  if (usageTimeDim === 'today') {
+    usageRefreshTimer = setInterval(() => { if (currentView === 'overview') renderOverview(); }, 30000);
+  }
+}
+
+async function toggleTracking() {
+  if (!ELECTRON_AVAILABLE) return;
+  try {
+    const st = await window.electronAPI.getTrackingStatus();
+    if (st.isRunning) { await window.electronAPI.stopTracking(); showToast('采集已暂停', 'success'); }
+    else { await window.electronAPI.startTracking(); showToast('采集已开始', 'success'); }
+    renderCurrentView();
+  } catch (e) { showToast('操作失败：' + e.message, 'error'); }
+}
+
+async function exportUsageData() {
+  if (!ELECTRON_AVAILABLE) return;
+  const range = getUsageDateRange();
+  try {
+    const ok = await window.electronAPI.exportUsageCsv(range.start, range.end);
+    if (ok) showToast('数据导出成功', 'success');
+  } catch (e) { showToast('导出失败：' + e.message, 'error'); }
+}
+
+async function toggleAutoTracking() {
+  if (!ELECTRON_AVAILABLE) return;
+  try {
+    const config = await window.electronAPI.getTrackingConfig();
+    config.trackingEnabled = !(config.trackingEnabled !== false);
+    await window.electronAPI.saveTrackingConfig(config);
+    showToast(config.trackingEnabled ? '已开启自动采集' : '已关闭自动采集', 'success');
+    renderSettingsView();
+  } catch (e) { showToast('操作失败：' + e.message, 'error'); }
+}
+
+async function saveConfigField(field, value) {
+  if (!ELECTRON_AVAILABLE) return;
+  try {
+    const config = await window.electronAPI.getTrackingConfig();
+    config[field] = value;
+    await window.electronAPI.saveTrackingConfig(config);
+    showToast('设置已保存', 'success');
+  } catch (e) { showToast('保存失败：' + e.message, 'error'); }
+}
+
+async function saveExcludedApps() {
+  if (!ELECTRON_AVAILABLE) return;
+  const textarea = document.getElementById('cfg-excluded');
+  const apps = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
+  try {
+    const config = await window.electronAPI.getTrackingConfig();
+    config.excludedApps = apps;
+    await window.electronAPI.saveTrackingConfig(config);
+    showToast('排除列表已保存', 'success');
+  } catch (e) { showToast('保存失败：' + e.message, 'error'); }
+}
+
+async function clearAllData(clearIcons) {
+  if (!ELECTRON_AVAILABLE) return;
+  const msg = clearIcons ? '确认清除所有使用数据和图标缓存？此操作不可恢复！' : '确认清除所有使用时长数据？图标缓存将保留。';
+  if (!confirm(msg)) return;
+  try {
+    // 清除过去 2 年的数据
+    const today = new Date();
+    const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const start = new Date(today); start.setFullYear(start.getFullYear() - 2);
+    await window.electronAPI.clearUsageData(fmt(start), fmt(today), clearIcons);
+    if (clearIcons) usageIcons = {};
+    showToast('数据已清除', 'success');
+    renderCurrentView();
+  } catch (e) { showToast('清除失败：' + e.message, 'error'); }
+}
+
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  document.getElementById('theme-icon-sun').style.display = theme === 'dark' ? 'block' : 'none';
+  document.getElementById('theme-icon-moon').style.display = theme === 'dark' ? 'none' : 'block';
+  if (ELECTRON_AVAILABLE) {
+    window.electronAPI.getSettings().then(s => { s.theme = theme; window.electronAPI.saveSettings(s); }).catch(() => {});
+  }
+  renderSettingsView();
+}
+
+// ======== THEME ========
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  setTheme(isDark ? 'light' : 'dark');
+}
+
+// ======== INIT ========
+async function init() {
+  let savedTheme = localStorage.getItem('theme') || 'light';
+  if (ELECTRON_AVAILABLE) {
+    try {
+      const settings = await window.electronAPI.getSettings();
+      if (settings.theme) { savedTheme = settings.theme; localStorage.setItem('theme', savedTheme); }
+    } catch {}
+  }
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.getElementById('theme-icon-sun').style.display = savedTheme === 'dark' ? 'block' : 'none';
+  document.getElementById('theme-icon-moon').style.display = savedTheme === 'dark' ? 'none' : 'block';
+  renderOverview();
+}
+init();
+</script>
+</body>
+</html>

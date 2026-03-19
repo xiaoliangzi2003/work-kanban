@@ -15,11 +15,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readImage: (taskId, index) => ipcRenderer.invoke('read-image', taskId, index),
   deleteImage: (taskId, index) => ipcRenderer.invoke('delete-image', taskId, index),
 
+  // 复盘数据
+  readReviews: () => ipcRenderer.invoke('read-reviews'),
+  saveReview: (rec) => ipcRenderer.invoke('save-review', rec),
+  deleteReview: (recId) => ipcRenderer.invoke('delete-review', recId),
+
   // 数据目录
   getDataDir: () => ipcRenderer.invoke('get-data-dir'),
 
   // 设置
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
-  selectDataDir: () => ipcRenderer.invoke('select-data-dir')
+  selectDataDir: () => ipcRenderer.invoke('select-data-dir'),
+
+  // 使用时长统计
+  startTracking: () => ipcRenderer.invoke('tracking-start'),
+  stopTracking: () => ipcRenderer.invoke('tracking-stop'),
+  getTrackingStatus: () => ipcRenderer.invoke('tracking-status'),
+  getUsageData: (startDate, endDate) => ipcRenderer.invoke('get-usage-data', startDate, endDate),
+  getAppIcon: (processName, exePath) => ipcRenderer.invoke('get-app-icon', processName, exePath),
+  getTrackingConfig: () => ipcRenderer.invoke('get-tracking-config'),
+  saveTrackingConfig: (config) => ipcRenderer.invoke('save-tracking-config', config),
+  clearUsageData: (startDate, endDate, clearIcons) => ipcRenderer.invoke('clear-usage-data', startDate, endDate, clearIcons),
+  exportUsageCsv: (startDate, endDate) => ipcRenderer.invoke('export-usage-csv', startDate, endDate)
 });
