@@ -380,6 +380,33 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
 .important-task-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
 .important-task-item:hover { box-shadow: var(--shadow); border-color: var(--accent-mid); }
 .important-task-item .task-card-title { flex: 1; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ======== ENV CONFIG ======== */
+.env-config-list { display: flex; flex-direction: column; gap: 10px; }
+.env-config-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; cursor: pointer; transition: var(--transition); }
+.env-config-card:hover { box-shadow: var(--shadow); border-color: var(--accent-mid); }
+.env-config-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.env-config-card-name { font-size: 14px; font-weight: 500; }
+.env-config-card-env { display: flex; gap: 4px; }
+.env-badge { display: inline-flex; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+.env-badge-dev { background: #dbeafe; color: #1e40af; }
+.env-badge-test { background: var(--amber-bg); color: var(--amber); }
+.env-badge-prod { background: var(--red-bg); color: var(--red); }
+[data-theme="dark"] .env-badge-dev { background: #1e3a8a; color: #93c5fd; }
+.env-config-card-fields { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.env-config-field-tag { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 8px; border-radius: 4px; }
+.env-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.env-detail-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+.env-detail-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-weight: 500; }
+.env-detail-value { font-size: 13px; font-weight: 500; word-break: break-all; }
+.env-detail-value.empty { color: var(--text3); font-style: italic; font-weight: 400; }
+.env-detail-value .copy-btn { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border2); background: transparent; color: var(--text3); font-size: 10px; cursor: pointer; transition: var(--transition); vertical-align: middle; }
+.env-detail-value .copy-btn:hover { background: var(--surface2); color: var(--text); }
+.env-custom-fields { margin-top: 10px; }
+.env-custom-field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.env-custom-field-row input { flex: 1; }
+.env-custom-field-row .remove-field-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
+.env-custom-field-row .remove-field-btn:hover { background: var(--red-bg); color: var(--red); border-color: var(--red); }
 </style>
 </head>
 <body>
@@ -547,6 +574,16 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <div id="important-content"></div>
       </div>
 
+      <!-- ENV CONFIG LIST VIEW -->
+      <div id="view-envconfig" class="view">
+        <div id="envconfig-content"></div>
+      </div>
+
+      <!-- ENV CONFIG DETAIL VIEW -->
+      <div id="view-envconfig-detail" class="view">
+        <div id="envconfig-detail-content"></div>
+      </div>
+
       <!-- PEOPLE VIEW -->
       <div id="view-people" class="view">
         <div id="people-content"></div>
@@ -634,6 +671,14 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
         <label class="form-label">备注</label>
         <input class="form-control" id="f-notes" placeholder="其他补充说明">
       </div>
+    </div>
+    <div class="form-divider">环境配置</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button type="button" class="btn btn-sm" id="f-envconfig-btn" onclick="goToEnvConfigFromProjectForm()" style="display:none">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>
+        管理环境配置
+      </button>
+      <span id="f-envconfig-hint" style="font-size:12px;color:var(--text3)">保存项目后可管理环境配置</span>
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('project-modal')">取消</button>
@@ -1061,6 +1106,38 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
   </div>
 </div>
 
+<!-- Env Config Form Modal -->
+<div class="modal-overlay" id="envconfig-modal">
+  <div class="modal modal-lg">
+    <h3 id="envconfig-modal-title">新建环境配置</h3>
+    <div class="modal-sub">填写环境配置信息，不需要的字段可留空</div>
+    <div class="form-row form-row-2">
+      <div class="form-group">
+        <label class="form-label">配置名称 <span class="required">*</span></label>
+        <input class="form-control" id="ec-name" placeholder="如 MySQL、Redis 等">
+      </div>
+      <div class="form-group">
+        <label class="form-label">环境</label>
+        <select class="form-control" id="ec-env">
+          <option value="dev">开发环境</option>
+          <option value="test">测试环境</option>
+          <option value="prod">生产环境</option>
+        </select>
+      </div>
+    </div>
+    <div id="ec-fields-container"></div>
+    <div class="form-divider">自定义字段</div>
+    <div id="ec-custom-fields" class="env-custom-fields"></div>
+    <div style="margin-top:6px">
+      <button type="button" class="btn btn-sm" onclick="addEnvCustomField()">+ 添加自定义字段</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('envconfig-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEnvConfigForm()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Modal -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal confirm-modal">
@@ -1103,6 +1180,12 @@ let viewingTaskProjectId = null;
 let viewingTaskId = null;
 // Images state for task form
 let taskEditImages = []; // [{src:'existing'|'new', file:File, previewUrl:string}]
+// Env config state
+let envConfigProjectId = null;
+let envConfigSubProjectId = null; // null for project-level, spId for sub-project
+let editingEnvConfigId = null;
+let envConfigCustomFieldCount = 0;
+let viewingEnvConfigId = null;
 
 const FSA_AVAILABLE = ('showDirectoryPicker' in window);
 
@@ -1466,7 +1549,7 @@ function isOverdue(dueDateStr) {
 
 // ======== VIEW NAVIGATION ========
 function showView(view) {
-  if (view !== 'detail') currentProjectId = null;
+  if (view !== 'detail' && view !== 'envconfig' && view !== 'envconfig-detail') currentProjectId = null;
   if (view === 'board') boardPages = { todo:1, doing:1, review:1, done:1 };
   currentView = view;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1478,7 +1561,7 @@ function showView(view) {
   const breadcrumb = document.getElementById('breadcrumb');
   breadcrumb.style.display = 'none';
   const newBtn = document.getElementById('topbar-new-btn');
-  if (view === 'important') {
+  if (view === 'important' || view === 'envconfig' || view === 'envconfig-detail') {
     newBtn.style.display = 'none';
   } else if (view === 'people') {
     newBtn.style.display = '';
@@ -1489,7 +1572,7 @@ function showView(view) {
     newBtn.onclick = () => openProjectForm(null);
     newBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> 新建项目';
   }
-  const titles = { dashboard:'总览', list:'项目列表', detail:'项目详情', board:'任务看板', risks:'风险管理', important:'重要任务', people:'人员管理' };
+  const titles = { dashboard:'总览', list:'项目列表', detail:'项目详情', board:'任务看板', risks:'风险管理', important:'重要任务', envconfig:'环境配置', 'envconfig-detail':'配置详情', people:'人员管理' };
   document.getElementById('topbar-title').textContent = titles[view] || '';
   renderCurrentView();
 }
@@ -1518,6 +1601,8 @@ function renderCurrentView() {
   else if (currentView === 'board') renderBoard();
   else if (currentView === 'risks') renderRisksView();
   else if (currentView === 'important') renderImportantView();
+  else if (currentView === 'envconfig') renderEnvConfigList();
+  else if (currentView === 'envconfig-detail') renderEnvConfigDetail();
   else if (currentView === 'people') renderPeopleView();
 }
 
@@ -1645,6 +1730,10 @@ function renderDetail(projectId) {
       <div class="detail-hero-header">
         <div class="detail-hero-title">${escHtml(proj.name)}</div>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="showEnvConfigList('${proj.id}',null)">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>
+            环境配置
+          </button>
           <button class="btn btn-sm" onclick="openProjectForm('${proj.id}')">编辑</button>
           <button class="btn btn-sm btn-danger" onclick="askDeleteProject('${proj.id}')">删除</button>
         </div>
@@ -1670,6 +1759,7 @@ function renderDetail(projectId) {
       <div class="tab ${currentDetailTab==='subprojects'?'active':''}" onclick="switchDetailTab('subprojects')">子项目 (${(proj.subProjects||[]).length})</div>
       <div class="tab ${currentDetailTab==='risks'?'active':''}" onclick="switchDetailTab('risks')">风险 (${allRisks.length}${highRiskCount?' · <span style=color:var(--red)>'+highRiskCount+' 高风险</span>':''})</div>
       <div class="tab ${currentDetailTab==='tasks'?'active':''}" onclick="switchDetailTab('tasks')">任务 (${allTasks.length})</div>
+      <div class="tab ${currentDetailTab==='envconfigs'?'active':''}" onclick="switchDetailTab('envconfigs')">环境配置 (${(proj.envConfigs||[]).length})</div>
     </div>
     <div id="detail-tab-content"></div>
   `;
@@ -1687,6 +1777,7 @@ function renderDetailTab(projectId) {
   if (currentDetailTab === 'subprojects') el.innerHTML = renderSubProjectsTab(proj);
   else if (currentDetailTab === 'risks') el.innerHTML = renderRisksTab(proj);
   else if (currentDetailTab === 'tasks') el.innerHTML = renderTasksTab(proj);
+  else if (currentDetailTab === 'envconfigs') el.innerHTML = renderEnvConfigsTab(proj);
 }
 
 // ======== SUBPROJECTS TAB ========
@@ -1735,6 +1826,9 @@ function renderSubProjectsTab(proj) {
           <div class="subproject-item-progress-bar"><div class="subproject-item-progress-fill" style="width:${overallProgress}%"></div></div>
         </div>
         <div class="subproject-item-actions" style="margin-left:8px">
+          <button class="icon-btn" title="环境配置" onclick="showEnvConfigList('${proj.id}','${sp.id}')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>
+          </button>
           <button class="icon-btn" title="编辑" onclick="openSubProjectForm('${proj.id}','${sp.id}')">
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
           </button>
@@ -2018,6 +2112,364 @@ function askDeleteTask() {
   };
   closeModal('task-detail-modal');
   openModal('confirm-modal');
+}
+
+// ======== ENV CONFIG ========
+const ENV_LABELS = { dev:'开发环境', test:'测试环境', prod:'生产环境' };
+const ENV_BADGE_CLASS = { dev:'env-badge-dev', test:'env-badge-test', prod:'env-badge-prod' };
+
+function getDefaultProjectEnvConfigs() {
+  return [
+    { id: genId(), name: 'MySQL', env: 'dev', fields: [
+      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
+    ]},
+    { id: genId(), name: 'MySQL', env: 'test', fields: [
+      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
+    ]},
+    { id: genId(), name: 'MySQL', env: 'prod', fields: [
+      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
+    ]},
+    { id: genId(), name: 'Redis', env: 'dev', fields: [
+      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
+    ]},
+    { id: genId(), name: 'Redis', env: 'test', fields: [
+      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
+    ]},
+    { id: genId(), name: 'Redis', env: 'prod', fields: [
+      { key: '连接地址', value: '' }, { key: '数据库名称', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }
+    ]},
+    { id: genId(), name: 'RocketMQ', env: 'dev', fields: [
+      { key: '连接地址', value: '' }, { key: '终端地址', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }, { key: '控制台地址', value: '' }
+    ]},
+    { id: genId(), name: 'RocketMQ', env: 'test', fields: [
+      { key: '连接地址', value: '' }, { key: '终端地址', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }, { key: '控制台地址', value: '' }
+    ]},
+    { id: genId(), name: 'RocketMQ', env: 'prod', fields: [
+      { key: '连接地址', value: '' }, { key: '终端地址', value: '' },
+      { key: '用户名', value: '' }, { key: '密码', value: '' }, { key: '备注', value: '' }, { key: '控制台地址', value: '' }
+    ]}
+  ];
+}
+
+function getDefaultSubProjectEnvConfigs() {
+  return [
+    { id: genId(), name: '环境地址', env: 'dev', fields: [
+      { key: '文档地址', value: '' }, { key: '测试环境地址', value: '' }, { key: '生产环境地址', value: '' }
+    ]}
+  ];
+}
+
+// Navigate to env config list from project form
+function goToEnvConfigFromProjectForm() {
+  const projId = editingProjectId;
+  closeModal('project-modal');
+  showEnvConfigList(projId, null);
+}
+
+// Show env config list view
+function showEnvConfigList(projectId, subProjectId) {
+  envConfigProjectId = projectId;
+  envConfigSubProjectId = subProjectId;
+  currentView = 'envconfig';
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-envconfig').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('topbar-title').textContent = '环境配置';
+  const newBtn = document.getElementById('topbar-new-btn');
+  newBtn.style.display = 'none';
+  const proj = getProject(projectId);
+  const breadcrumb = document.getElementById('breadcrumb');
+  breadcrumb.style.display = 'flex';
+  if (subProjectId) {
+    const sp = (proj?.subProjects||[]).find(s=>s.id===subProjectId);
+    breadcrumb.innerHTML = `<span class="breadcrumb-link" onclick="showView('list')">项目列表</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-link" onclick="showDetail('${projectId}')">${escHtml(proj?.name||'')}</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-link" onclick="showDetail('${projectId}')">${escHtml(sp?.name||'子项目')}</span><span class="breadcrumb-sep">/</span><span>环境配置</span>`;
+  } else {
+    breadcrumb.innerHTML = `<span class="breadcrumb-link" onclick="showView('list')">项目列表</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-link" onclick="showDetail('${projectId}')">${escHtml(proj?.name||'')}</span><span class="breadcrumb-sep">/</span><span>环境配置</span>`;
+  }
+  renderEnvConfigList();
+}
+
+function renderEnvConfigList() {
+  const proj = getProject(envConfigProjectId);
+  if (!proj) { document.getElementById('envconfig-content').innerHTML = '<p>项目不存在</p>'; return; }
+  let configs;
+  let entityName;
+  if (envConfigSubProjectId) {
+    const sp = (proj.subProjects||[]).find(s=>s.id===envConfigSubProjectId);
+    configs = sp?.envConfigs || [];
+    entityName = sp?.name || '子项目';
+  } else {
+    configs = proj.envConfigs || [];
+    entityName = proj.name;
+  }
+  const listHtml = configs.length ? configs.map(cfg => {
+    const filledFields = cfg.fields.filter(f => f.value).length;
+    return `<div class="env-config-card" onclick="showEnvConfigDetail('${cfg.id}')">
+      <div class="env-config-card-header">
+        <div class="env-config-card-name">${escHtml(cfg.name)}</div>
+        <div class="env-config-card-env">
+          <span class="env-badge ${ENV_BADGE_CLASS[cfg.env]||''}">${ENV_LABELS[cfg.env]||cfg.env}</span>
+          <span style="font-size:11px;color:var(--text3)">${filledFields}/${cfg.fields.length} 已填</span>
+        </div>
+      </div>
+      <div class="env-config-card-fields">
+        ${cfg.fields.map(f => `<span class="env-config-field-tag">${escHtml(f.key)}</span>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+        <button class="icon-btn" onclick="event.stopPropagation();openEnvConfigForm('${cfg.id}')" title="编辑">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        </button>
+        <button class="icon-btn delete" onclick="event.stopPropagation();askDeleteEnvConfig('${cfg.id}')" title="删除">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="dash-empty" style="padding:40px 0">暂无环境配置</div>';
+
+  document.getElementById('envconfig-content').innerHTML = `
+    <div class="section-actions" style="margin-bottom:16px">
+      <div class="section-title">${escHtml(entityName)} - 环境配置（${configs.length} 项）</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-primary" onclick="openEnvConfigForm(null)">+ 新建配置</button>
+        <button class="btn btn-sm" onclick="showDetail('${envConfigProjectId}')">返回项目</button>
+      </div>
+    </div>
+    <div class="env-config-list">${listHtml}</div>`;
+}
+
+// Env config detail view
+function showEnvConfigDetail(configId) {
+  viewingEnvConfigId = configId;
+  currentView = 'envconfig-detail';
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-envconfig-detail').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('topbar-title').textContent = '配置详情';
+  const newBtn = document.getElementById('topbar-new-btn');
+  newBtn.style.display = 'none';
+  const proj = getProject(envConfigProjectId);
+  const breadcrumb = document.getElementById('breadcrumb');
+  breadcrumb.style.display = 'flex';
+  const cfg = getEnvConfig(envConfigProjectId, envConfigSubProjectId, configId);
+  const cfgName = cfg ? cfg.name : '配置';
+  if (envConfigSubProjectId) {
+    const sp = (proj?.subProjects||[]).find(s=>s.id===envConfigSubProjectId);
+    breadcrumb.innerHTML = `<span class="breadcrumb-link" onclick="showView('list')">项目列表</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-link" onclick="showDetail('${envConfigProjectId}')">${escHtml(proj?.name||'')}</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-link" onclick="showEnvConfigList('${envConfigProjectId}','${envConfigSubProjectId}')">环境配置</span><span class="breadcrumb-sep">/</span><span>${escHtml(cfgName)}</span>`;
+  } else {
+    breadcrumb.innerHTML = `<span class="breadcrumb-link" onclick="showView('list')">项目列表</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-link" onclick="showDetail('${envConfigProjectId}')">${escHtml(proj?.name||'')}</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-link" onclick="showEnvConfigList('${envConfigProjectId}',null)">环境配置</span><span class="breadcrumb-sep">/</span><span>${escHtml(cfgName)}</span>`;
+  }
+  renderEnvConfigDetail();
+}
+
+function renderEnvConfigDetail() {
+  const cfg = getEnvConfig(envConfigProjectId, envConfigSubProjectId, viewingEnvConfigId);
+  if (!cfg) { document.getElementById('envconfig-detail-content').innerHTML = '<p>配置不存在</p>'; return; }
+  const fieldsHtml = cfg.fields.map(f => `
+    <div class="env-detail-item">
+      <div class="env-detail-label">${escHtml(f.key)}</div>
+      <div class="env-detail-value ${f.value ? '' : 'empty'}">
+        ${f.value ? escHtml(f.value) : '未填写'}
+        ${f.value ? `<button class="copy-btn" onclick="copyToClipboard('${escHtml(f.value)}')">复制</button>` : ''}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('envconfig-detail-content').innerHTML = `
+    <div class="detail-hero" style="margin-bottom:20px">
+      <div class="detail-hero-header">
+        <div class="detail-hero-title">${escHtml(cfg.name)}</div>
+        <div style="display:flex;gap:8px">
+          <span class="env-badge ${ENV_BADGE_CLASS[cfg.env]||''}" style="font-size:12px;padding:4px 12px">${ENV_LABELS[cfg.env]||cfg.env}</span>
+          <button class="btn btn-sm" onclick="openEnvConfigForm('${cfg.id}')">编辑</button>
+          <button class="btn btn-sm btn-danger" onclick="askDeleteEnvConfig('${cfg.id}')">删除</button>
+          <button class="btn btn-sm" onclick="showEnvConfigList('${envConfigProjectId}',${envConfigSubProjectId ? `'${envConfigSubProjectId}'` : 'null'})">返回列表</button>
+        </div>
+      </div>
+    </div>
+    <div class="env-detail-grid">${fieldsHtml}</div>`;
+}
+
+function getEnvConfig(projectId, subProjectId, configId) {
+  const proj = getProject(projectId);
+  if (!proj) return null;
+  if (subProjectId) {
+    const sp = (proj.subProjects||[]).find(s=>s.id===subProjectId);
+    return (sp?.envConfigs||[]).find(c=>c.id===configId);
+  }
+  return (proj.envConfigs||[]).find(c=>c.id===configId);
+}
+
+function getEnvConfigsArray(projectId, subProjectId) {
+  const proj = getProject(projectId);
+  if (!proj) return [];
+  if (subProjectId) {
+    const sp = (proj.subProjects||[]).find(s=>s.id===subProjectId);
+    return sp?.envConfigs || [];
+  }
+  return proj.envConfigs || [];
+}
+
+function setEnvConfigsArray(projectId, subProjectId, configs) {
+  const proj = getProject(projectId);
+  if (!proj) return;
+  if (subProjectId) {
+    const sp = (proj.subProjects||[]).find(s=>s.id===subProjectId);
+    if (sp) sp.envConfigs = configs;
+  } else {
+    proj.envConfigs = configs;
+  }
+}
+
+// Render env configs tab inside project detail
+function renderEnvConfigsTab(proj) {
+  const configs = proj.envConfigs || [];
+  // Also include sub-project configs
+  const spConfigs = (proj.subProjects||[]).flatMap(sp => (sp.envConfigs||[]).map(c => ({...c, _spName: sp.name, _spId: sp.id})));
+
+  const listHtml = configs.length ? configs.map(cfg => {
+    const filledFields = cfg.fields.filter(f => f.value).length;
+    return `<div class="env-config-card" onclick="envConfigProjectId='${proj.id}';envConfigSubProjectId=null;showEnvConfigDetail('${cfg.id}')">
+      <div class="env-config-card-header">
+        <div class="env-config-card-name">${escHtml(cfg.name)}</div>
+        <span class="env-badge ${ENV_BADGE_CLASS[cfg.env]||''}">${ENV_LABELS[cfg.env]||cfg.env}</span>
+      </div>
+      <div class="env-config-card-fields">
+        ${cfg.fields.slice(0,4).map(f => `<span class="env-config-field-tag">${escHtml(f.key)}${f.value ? ': '+escHtml(f.value.length>20?f.value.slice(0,20)+'...':f.value) : ''}</span>`).join('')}
+        ${cfg.fields.length > 4 ? `<span class="env-config-field-tag">+${cfg.fields.length-4}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('') : '<div class="dash-empty" style="padding:20px 0">暂无项目级环境配置</div>';
+
+  const spListHtml = spConfigs.length ? spConfigs.map(cfg => `
+    <div class="env-config-card" onclick="envConfigProjectId='${proj.id}';envConfigSubProjectId='${cfg._spId}';showEnvConfigDetail('${cfg.id}')">
+      <div class="env-config-card-header">
+        <div class="env-config-card-name">${escHtml(cfg._spName)} - ${escHtml(cfg.name)}</div>
+        <span class="env-badge ${ENV_BADGE_CLASS[cfg.env]||''}">${ENV_LABELS[cfg.env]||cfg.env}</span>
+      </div>
+    </div>`).join('') : '';
+
+  return `
+    <div class="section-actions">
+      <div class="section-title">项目环境配置</div>
+      <button class="btn btn-sm btn-primary" onclick="showEnvConfigList('${proj.id}',null)">管理环境配置</button>
+    </div>
+    <div class="env-config-list" style="margin-bottom:20px">${listHtml}</div>
+    ${spConfigs.length ? `<div class="section-actions"><div class="section-title">子项目环境配置</div></div><div class="env-config-list">${spListHtml}</div>` : ''}`;
+}
+
+// Open env config form
+function openEnvConfigForm(configId) {
+  editingEnvConfigId = configId;
+  envConfigCustomFieldCount = 0;
+  const cfg = configId ? getEnvConfig(envConfigProjectId, envConfigSubProjectId, configId) : null;
+  document.getElementById('envconfig-modal-title').textContent = cfg ? '编辑环境配置' : '新建环境配置';
+  document.getElementById('ec-name').value = cfg?.name || '';
+  document.getElementById('ec-env').value = cfg?.env || 'dev';
+
+  // Render standard fields
+  const container = document.getElementById('ec-fields-container');
+  if (cfg) {
+    container.innerHTML = cfg.fields.map((f, i) => `
+      <div class="form-row form-row-2" data-field-idx="${i}">
+        <div class="form-group">
+          <label class="form-label">${escHtml(f.key)}</label>
+          <input class="form-control ec-field-value" data-key="${escHtml(f.key)}" value="${escHtml(f.value)}" placeholder="输入${escHtml(f.key)}">
+        </div>
+      </div>`).join('');
+  } else {
+    container.innerHTML = '';
+  }
+
+  // Clear custom fields
+  document.getElementById('ec-custom-fields').innerHTML = '';
+  openModal('envconfig-modal');
+}
+
+function addEnvCustomField() {
+  envConfigCustomFieldCount++;
+  const container = document.getElementById('ec-custom-fields');
+  const row = document.createElement('div');
+  row.className = 'env-custom-field-row';
+  row.id = `ec-custom-${envConfigCustomFieldCount}`;
+  row.innerHTML = `
+    <input class="form-control" placeholder="字段名" id="ec-custom-key-${envConfigCustomFieldCount}">
+    <input class="form-control" placeholder="字段值" id="ec-custom-val-${envConfigCustomFieldCount}">
+    <button class="remove-field-btn" onclick="document.getElementById('ec-custom-${envConfigCustomFieldCount}').remove()" title="删除">
+      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>`;
+  container.appendChild(row);
+}
+
+async function saveEnvConfigForm() {
+  const name = document.getElementById('ec-name').value.trim();
+  if (!name) { showToast('请填写配置名称', 'error'); return; }
+  const env = document.getElementById('ec-env').value;
+
+  // Collect standard fields
+  const fields = [];
+  document.querySelectorAll('#ec-fields-container .ec-field-value').forEach(input => {
+    fields.push({ key: input.dataset.key, value: input.value.trim() });
+  });
+
+  // Collect custom fields
+  document.querySelectorAll('#ec-custom-fields .env-custom-field-row').forEach(row => {
+    const keyInput = row.querySelector('input:first-child');
+    const valInput = row.querySelector('input:nth-child(2)');
+    const key = keyInput?.value?.trim();
+    if (key) fields.push({ key, value: valInput?.value?.trim() || '' });
+  });
+
+  const proj = getProject(envConfigProjectId);
+  if (!proj) return;
+
+  let configs = getEnvConfigsArray(envConfigProjectId, envConfigSubProjectId);
+  if (editingEnvConfigId) {
+    const idx = configs.findIndex(c => c.id === editingEnvConfigId);
+    if (idx >= 0) {
+      configs[idx] = { ...configs[idx], name, env, fields };
+    }
+  } else {
+    // If no fields defined (new custom config), add empty fields
+    if (!fields.length) fields.push({ key: '值', value: '' });
+    configs.push({ id: genId(), name, env, fields });
+  }
+  setEnvConfigsArray(envConfigProjectId, envConfigSubProjectId, configs);
+  await saveProject(proj);
+  closeModal('envconfig-modal');
+  showToast('环境配置已保存', 'success');
+  if (currentView === 'envconfig') renderEnvConfigList();
+  else if (currentView === 'envconfig-detail') renderEnvConfigDetail();
+  else if (currentView === 'detail') renderDetail(envConfigProjectId);
+}
+
+function askDeleteEnvConfig(configId) {
+  const cfg = getEnvConfig(envConfigProjectId, envConfigSubProjectId, configId);
+  document.getElementById('confirm-title').textContent = '确认删除环境配置';
+  document.getElementById('confirm-msg').textContent = `确定删除配置「${cfg?.name||''}」吗？此操作无法撤销。`;
+  pendingConfirmFn = async () => {
+    const proj = getProject(envConfigProjectId);
+    if (!proj) return;
+    let configs = getEnvConfigsArray(envConfigProjectId, envConfigSubProjectId);
+    configs = configs.filter(c => c.id !== configId);
+    setEnvConfigsArray(envConfigProjectId, envConfigSubProjectId, configs);
+    await saveProject(proj);
+    showToast('环境配置已删除', 'success');
+    if (currentView === 'envconfig-detail') showEnvConfigList(envConfigProjectId, envConfigSubProjectId);
+    else if (currentView === 'envconfig') renderEnvConfigList();
+    else if (currentView === 'detail') renderDetail(envConfigProjectId);
+  };
+  openModal('confirm-modal');
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('已复制', 'success')).catch(() => showToast('复制失败', 'error'));
 }
 
 // ======== DELETE TASK FROM CARD ========
@@ -2324,13 +2776,24 @@ function openProjectForm(projectId) {
   // Initialize owner multi-select
   const selectedOwners = proj?.owners || (proj?.owner ? [proj.owner] : []);
   initMs('f-owner-ms', people.map(p=>({id:p.id,name:p.name})), selectedOwners, '选择负责人');
+  // Show/hide env config button
+  const ecBtn = document.getElementById('f-envconfig-btn');
+  const ecHint = document.getElementById('f-envconfig-hint');
+  if (projectId) {
+    ecBtn.style.display = '';
+    ecHint.style.display = 'none';
+  } else {
+    ecBtn.style.display = 'none';
+    ecHint.style.display = '';
+  }
   openModal('project-modal');
 }
 async function saveProjectForm() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { showToast('请填写项目名称', 'error'); return; }
+  const isNew = !editingProjectId;
   const proj = editingProjectId ? { ...getProject(editingProjectId) } : {
-    id: genId(), subProjects: [], risks: [], tasks: [], createdAt: new Date().toISOString()
+    id: genId(), subProjects: [], risks: [], tasks: [], envConfigs: getDefaultProjectEnvConfigs(), createdAt: new Date().toISOString()
   };
   proj.name = name;
   proj.description = document.getElementById('f-desc').value.trim();
@@ -2409,7 +2872,7 @@ async function saveSubProjectForm() {
       owners, roleProgress, progress: avgProgress,
       startDate: document.getElementById('sf-start').value,
       dueDate: document.getElementById('sf-due').value,
-      tasks: [], createdAt: new Date().toISOString() });
+      tasks: [], envConfigs: getDefaultSubProjectEnvConfigs(), createdAt: new Date().toISOString() });
   }
   await saveProject(proj);
   closeModal('subproject-modal');
