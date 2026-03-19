@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 
 let mainWindow;
 
@@ -62,7 +62,7 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile('kanban.html');
+  mainWindow.loadFile('home.html');
 
   // 开发模式下打开 DevTools
   if (!app.isPackaged) {
@@ -74,7 +74,10 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  startBackgroundMeetingWatcher();
+});
 
 app.on('window-all-closed', () => {
   app.quit();
@@ -321,65 +324,100 @@ ipcMain.handle('save-meeting-config', async (event, config) => {
   return true;
 });
 
-// ---- 腾讯会议进程监听 ----
-let meetingWatchState = {
+// ---- 腾讯会议进程后台监听（应用启动时自动开启，全程运行）----
+let bgWatcher = {
   timer: null,
-  isRunning: false,
-  lastWemeetRunning: false
+  lastRunning: false,
+  meetingActive: false,
+  meetingStartedAt: null,
+  checkInProgress: false,
 };
 
-// 检查腾讯会议进程是否在运行（Windows）
-function isWemeetRunning() {
-  try {
-    const { execSync } = require('child_process');
-    // WeMeeting.exe 是腾讯会议主进程名
-    const out = execSync(
-      'tasklist /FI "IMAGENAME eq WeMeeting.exe" /NH /FO CSV 2>nul',
-      { encoding: 'utf-8', timeout: 3000, windowsHide: true }
-    );
-    return out.toLowerCase().includes('wemeeting.exe');
-  } catch {
-    return false;
-  }
+// 向所有窗口广播 IPC 事件
+function broadcastToAll(channel, data) {
+  BrowserWindow.getAllWindows().forEach(win => {
+    if (!win.isDestroyed()) {
+      try { win.webContents.send(channel, data); } catch {}
+    }
+  });
 }
 
-ipcMain.handle('check-wemeet-running', async () => {
-  return isWemeetRunning();
-});
+// 异步检查 wemeetapp 进程（不阻塞主线程）
+function pollWemeetProcess() {
+  if (bgWatcher.checkInProgress) return;
+  bgWatcher.checkInProgress = true;
 
-ipcMain.handle('start-meeting-watch', async () => {
-  if (meetingWatchState.isRunning) return true;
-  meetingWatchState.isRunning = true;
-  meetingWatchState.lastWemeetRunning = isWemeetRunning();
+  exec(
+    'tasklist /FI "IMAGENAME eq wemeetapp.exe" /NH /FO CSV 2>nul',
+    { encoding: 'utf-8', timeout: 4000, windowsHide: true },
+    (err, stdout) => {
+      bgWatcher.checkInProgress = false;
+      const running = !err && stdout.toLowerCase().includes('wemeetapp.exe');
 
-  meetingWatchState.timer = setInterval(() => {
-    const running = isWemeetRunning();
-    // 会议从"在运行"变为"不在运行"，说明刚结束
-    if (meetingWatchState.lastWemeetRunning && !running) {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('meeting-ended', { title: '' });
-        // 如果窗口最小化则闪烁任务栏提醒用户
-        if (mainWindow.isMinimized()) mainWindow.flashFrame(true);
+      if (running && !bgWatcher.lastRunning) {
+        // 腾讯会议 刚刚启动
+        bgWatcher.meetingActive = true;
+        bgWatcher.meetingStartedAt = new Date().toISOString();
+        broadcastToAll('meeting-started', {
+          startedAt: bgWatcher.meetingStartedAt
+        });
+        broadcastToAll('wemeet-status', {
+          running: true,
+          meetingActive: true,
+          startedAt: bgWatcher.meetingStartedAt
+        });
+      } else if (!running && bgWatcher.lastRunning) {
+        // 腾讯会议 刚刚退出
+        const startedAt = bgWatcher.meetingStartedAt;
+        const endedAt = new Date().toISOString();
+        const duration = startedAt
+          ? Math.round((new Date(endedAt) - new Date(startedAt)) / 60000)
+          : null;
+        bgWatcher.meetingActive = false;
+        bgWatcher.meetingStartedAt = null;
+
+        broadcastToAll('meeting-ended', { startedAt, endedAt, duration, title: '' });
+        broadcastToAll('wemeet-status', {
+          running: false, meetingActive: false, startedAt: null, endedAt, duration
+        });
+
+        // 窗口最小化时闪烁任务栏提醒
+        BrowserWindow.getAllWindows().forEach(win => {
+          if (!win.isDestroyed() && win.isMinimized()) {
+            try { win.flashFrame(true); } catch {}
+          }
+        });
       }
+      // 状态未变化时不重复广播，由前端自行计时
+
+      bgWatcher.lastRunning = running;
     }
-    meetingWatchState.lastWemeetRunning = running;
-  }, 3000);
+  );
+}
 
-  return true;
-});
+function startBackgroundMeetingWatcher() {
+  if (bgWatcher.timer) return;
+  pollWemeetProcess(); // 立即检测一次
+  bgWatcher.timer = setInterval(pollWemeetProcess, 3000);
+}
 
-ipcMain.handle('stop-meeting-watch', async () => {
-  meetingWatchState.isRunning = false;
-  if (meetingWatchState.timer) {
-    clearInterval(meetingWatchState.timer);
-    meetingWatchState.timer = null;
-  }
-  return true;
-});
+// 查询当前腾讯会议状态（页面加载时调用）
+ipcMain.handle('get-wemeet-status', async () => ({
+  running: bgWatcher.lastRunning,
+  meetingActive: bgWatcher.meetingActive,
+  startedAt: bgWatcher.meetingStartedAt,
+  watcherRunning: bgWatcher.timer !== null,
+}));
 
-ipcMain.handle('get-meeting-watch-status', async () => {
-  return { isRunning: meetingWatchState.isRunning };
-});
+// 兼容旧接口（background watcher 始终在跑，这里仅返回状态）
+ipcMain.handle('check-wemeet-running', async () => bgWatcher.lastRunning);
+ipcMain.handle('start-meeting-watch', async () => true);
+ipcMain.handle('stop-meeting-watch', async () => true);
+ipcMain.handle('get-meeting-watch-status', async () => ({
+  isRunning: bgWatcher.timer !== null,
+  wemeetRunning: bgWatcher.lastRunning,
+  meetingActive: bgWatcher.meetingActive,
+}));
 
 // ========== 应用使用时长统计模块 ==========
 

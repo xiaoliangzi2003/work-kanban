@@ -27,6 +27,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "home.html",
       "kanban.html",
       "Index.html",
       "usage.html",
