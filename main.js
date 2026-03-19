@@ -224,6 +224,41 @@ ipcMain.handle('select-data-dir', async () => {
   return result.filePaths[0];
 });
 
+// ========== IPC: 日历日程 ==========
+
+function getCalendarDir() {
+  const dir = path.join(getDataDir(), 'calendar');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+ipcMain.handle('read-events', async () => {
+  const calDir = getCalendarDir();
+  const files = fs.readdirSync(calDir).filter(f => f.startsWith('event_') && f.endsWith('.json'));
+  const events = [];
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(calDir, file), 'utf-8');
+      events.push(JSON.parse(content));
+    } catch (e) { /* skip corrupt files */ }
+  }
+  return events;
+});
+
+ipcMain.handle('save-event', async (event, ev) => {
+  const calDir = getCalendarDir();
+  const filePath = path.join(calDir, `event_${ev.id}.json`);
+  fs.writeFileSync(filePath, JSON.stringify(ev, null, 2), 'utf-8');
+  return true;
+});
+
+ipcMain.handle('delete-event', async (event, eventId) => {
+  const calDir = getCalendarDir();
+  const filePath = path.join(calDir, `event_${eventId}.json`);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  return true;
+});
+
 // ========== 应用使用时长统计模块 ==========
 
 const DEFAULT_EXCLUDED_APPS = [

@@ -28,6 +28,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   selectDataDir: () => ipcRenderer.invoke('select-data-dir'),
 
+  // 日历日程
+  readEvents: () => ipcRenderer.invoke('read-events'),
+  saveEvent: (ev) => ipcRenderer.invoke('save-event', ev),
+  deleteEvent: (eventId) => ipcRenderer.invoke('delete-event', eventId),
+
   // 使用时长统计
   startTracking: () => ipcRenderer.invoke('tracking-start'),
   stopTracking: () => ipcRenderer.invoke('tracking-stop'),

@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日历日程</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0eeea;
+  --border: rgba(30,30,30,0.1);
+  --border2: rgba(30,30,30,0.18);
+  --text: #1a1a1a;
+  --text2: #5a5a5a;
+  --text3: #999;
+  --accent: #1F4E79;
+  --accent2: #2E75B6;
+  --accent-light: #e8f0f8;
+  --accent-mid: #b8d0ea;
+  --green: #2d6a4f;
+  --green-bg: #e8f5ee;
+  --amber: #92400e;
+  --amber-bg: #fef3c7;
+  --red: #9b1c1c;
+  --red-bg: #fee2e2;
+  --purple: #7c3aed;
+  --purple-bg: #f3e8ff;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  --shadow2: 0 8px 32px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #283548;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --accent: #2563eb;
+  --accent2: #60a5fa;
+  --accent-light: #1e3252;
+  --accent-mid: rgba(96,165,250,0.2);
+  --green: #4ade80;
+  --green-bg: #052e16;
+  --amber: #fbbf24;
+  --amber-bg: #1c1400;
+  --red: #f87171;
+  --red-bg: #2d0000;
+  --purple: #a78bfa;
+  --purple-bg: #1e1045;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+  --shadow2: 0 8px 32px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .sidebar { background: #1e3252; }
+[data-theme="dark"] .mini-cal-day.today { background: var(--accent); color: #fff; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ======== LAYOUT ======== */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 240px;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: var(--transition);
+}
+.sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.sidebar-logo h1 { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; letter-spacing: 0.3px; line-height: 1.3; color: #fff; }
+.sidebar-logo p { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; letter-spacing: 0.8px; text-transform: uppercase; }
+.sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 24px; cursor: pointer; color: rgba(255,255,255,0.65); font-size: 13.5px; transition: var(--transition); border-left: 3px solid transparent; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-item.active { color: #fff; background: rgba(255,255,255,0.12); border-left-color: rgba(255,255,255,0.7); }
+.nav-icon { width: 18px; height: 18px; opacity: 0.9; flex-shrink: 0; }
+.sidebar-switch { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; flex-direction: column; gap: 4px; }
+.switch-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.8px; text-transform: uppercase; padding: 0 8px; margin-bottom: 2px; }
+.switch-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--radius-sm); font-size: 12.5px; color: rgba(255,255,255,0.55); text-decoration: none; transition: var(--transition); cursor: pointer; }
+.switch-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.switch-item.active { background: rgba(255,255,255,0.12); color: #fff; }
+.switch-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.sidebar-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 11px; color: rgba(255,255,255,0.4); }
+
+/* Mini Calendar in sidebar */
+.mini-cal { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.12); }
+.mini-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; }
+.mini-cal-header span { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 500; }
+.mini-cal-header button { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+.mini-cal-header button:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; text-align: center; }
+.mini-cal-weekday { font-size: 10px; color: rgba(255,255,255,0.35); padding: 2px 0; }
+.mini-cal-day { font-size: 11px; color: rgba(255,255,255,0.5); padding: 3px 0; border-radius: 4px; cursor: pointer; position: relative; }
+.mini-cal-day:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.mini-cal-day.today { background: rgba(255,255,255,0.2); color: #fff; font-weight: 700; }
+.mini-cal-day.selected { background: rgba(255,255,255,0.3); color: #fff; }
+.mini-cal-day.other-month { opacity: 0.3; }
+.mini-cal-day.has-event::after { content:''; position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.6); }
+
+.main { margin-left: 240px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-title { font-size: 17px; font-weight: 500; }
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text); transition: var(--transition); font-weight: 500; }
+.btn:hover { background: var(--surface2); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-icon { padding: 6px 10px; font-size: 16px; border: none; background: none; color: var(--text2); cursor: pointer; border-radius: var(--radius-sm); }
+.btn-icon:hover { background: var(--surface2); color: var(--text); }
+
+.view-tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: var(--radius-sm); padding: 3px; }
+.view-tab { padding: 5px 14px; border-radius: 6px; font-size: 12.5px; cursor: pointer; border: none; background: none; color: var(--text2); font-family: inherit; transition: var(--transition); }
+.view-tab:hover { color: var(--text); }
+.view-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+.content { flex: 1; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ======== CATEGORY COLORS ======== */
+.cat-work { --cat-color: var(--accent); --cat-bg: var(--accent-light); }
+.cat-personal { --cat-color: var(--green); --cat-bg: var(--green-bg); }
+.cat-meeting { --cat-color: var(--purple); --cat-bg: var(--purple-bg); }
+.cat-deadline { --cat-color: var(--red); --cat-bg: var(--red-bg); }
+.cat-task { --cat-color: var(--amber); --cat-bg: var(--amber-bg); }
+.cat-other { --cat-color: var(--text2); --cat-bg: var(--surface2); }
+
+/* ======== DAY / WEEK VIEW ======== */
+.timeline-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.allday-section { background: var(--surface); border-bottom: 1px solid var(--border); padding: 4px 0 4px 72px; min-height: 28px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.allday-label { position: absolute; left: 0; width: 72px; text-align: center; font-size: 11px; color: var(--text3); }
+.allday-event { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent)); border-left: 3px solid var(--cat-color, var(--accent)); }
+.allday-event:hover { filter: brightness(0.95); }
+
+.timeline-body { flex: 1; overflow-y: auto; position: relative; }
+.timeline-grid { position: relative; min-height: calc(24 * 60px); }
+
+/* Day view specific */
+.day-grid { display: grid; grid-template-columns: 72px 1fr; }
+.day-grid .time-labels { grid-column: 1; }
+.day-grid .day-column { grid-column: 2; position: relative; }
+
+/* Week view specific */
+.week-header { display: grid; grid-template-columns: 72px repeat(7, 1fr); background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
+.week-header-cell { text-align: center; padding: 8px 4px; font-size: 12px; color: var(--text2); border-left: 1px solid var(--border); }
+.week-header-cell .weekday { font-size: 11px; color: var(--text3); }
+.week-header-cell .datenum { font-size: 20px; font-weight: 500; color: var(--text); margin-top: 2px; width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.week-header-cell.today .datenum { background: var(--accent); color: #fff; }
+
+.week-grid { display: grid; grid-template-columns: 72px repeat(7, 1fr); position: relative; }
+.week-grid .time-labels { grid-column: 1; }
+.week-col { position: relative; border-left: 1px solid var(--border); min-height: calc(24 * 60px); }
+
+.time-labels { position: relative; }
+.time-label { height: 60px; display: flex; align-items: flex-start; justify-content: center; font-size: 11px; color: var(--text3); padding-top: 0; transform: translateY(-7px); }
+
+.hour-line { position: absolute; left: 72px; right: 0; height: 1px; background: var(--border); pointer-events: none; }
+
+.now-line { position: absolute; left: 60px; right: 0; height: 2px; background: var(--red); z-index: 4; pointer-events: none; }
+.now-line::before { content: ''; position: absolute; left: 0; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+
+/* Event blocks in day/week view */
+.event-block { position: absolute; left: 2px; right: 4px; border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; overflow: hidden; z-index: 2; transition: box-shadow 0.15s; border-left: 3px solid var(--cat-color, var(--accent)); background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent)); }
+.event-block:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 3; }
+.event-block .ev-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-block .ev-time { font-size: 11px; opacity: 0.8; }
+
+/* Click to create */
+.day-column, .week-col { cursor: pointer; }
+.day-column:hover, .week-col:hover { background: rgba(0,0,0,0.01); }
+[data-theme="dark"] .day-column:hover, [data-theme="dark"] .week-col:hover { background: rgba(255,255,255,0.01); }
+
+/* ======== MONTH VIEW ======== */
+.month-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 24px; }
+.month-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; border: 1px solid var(--border); border-bottom: none; }
+.month-grid-header-cell { text-align: center; padding: 10px; font-size: 12px; color: var(--text2); font-weight: 500; }
+.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); flex: 1; border: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); background: var(--surface); }
+.month-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 4px 6px; min-height: 90px; cursor: pointer; transition: background 0.15s; overflow: hidden; }
+.month-cell:nth-child(7n) { border-right: none; }
+.month-cell:hover { background: var(--surface2); }
+.month-cell.other-month { opacity: 0.4; }
+.month-cell.today { background: var(--accent-light); }
+.month-cell-date { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.month-cell.today .month-cell-date { color: var(--accent); font-weight: 700; }
+.month-event { display: flex; align-items: center; gap: 4px; padding: 1px 6px; margin-bottom: 1px; border-radius: 3px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: var(--cat-bg, var(--accent-light)); color: var(--cat-color, var(--accent)); border-left: 2px solid var(--cat-color, var(--accent)); }
+.month-event:hover { filter: brightness(0.95); }
+.month-more { font-size: 11px; color: var(--accent2); cursor: pointer; padding: 1px 6px; }
+.month-more:hover { text-decoration: underline; }
+
+/* ======== YEAR VIEW ======== */
+.year-view { flex: 1; overflow-y: auto; padding: 24px; }
+.year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
+.year-month-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; cursor: pointer; transition: var(--transition); }
+.year-month-card:hover { box-shadow: var(--shadow); border-color: var(--accent-mid); }
+.year-month-title { font-size: 14px; font-weight: 500; margin-bottom: 10px; text-align: center; }
+.year-mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; text-align: center; }
+.year-mini-weekday { font-size: 9px; color: var(--text3); padding: 2px 0; }
+.year-mini-day { font-size: 10px; color: var(--text2); padding: 2px 0; border-radius: 3px; position: relative; }
+.year-mini-day.today { background: var(--accent); color: #fff; font-weight: 700; border-radius: 50%; }
+.year-mini-day.has-event { font-weight: 600; color: var(--accent); }
+.year-mini-day.other-month { visibility: hidden; }
+
+/* ======== ALL EVENTS LIST VIEW ======== */
+.list-view { flex: 1; overflow-y: auto; padding: 24px 32px; }
+.list-section { margin-bottom: 24px; }
+.list-section-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.list-event { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+.list-event:hover { background: var(--surface2); }
+.list-event-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.list-event-info { flex: 1; min-width: 0; }
+.list-event-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-event-meta { font-size: 12px; color: var(--text2); }
+.list-event-cat { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+.list-empty { text-align: center; padding: 48px 0; color: var(--text3); }
+.list-empty svg { width: 64px; height: 64px; margin-bottom: 12px; opacity: 0.3; }
+
+/* Search & Filter bar */
+.filter-bar { display: flex; gap: 10px; align-items: center; padding: 12px 32px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.search-input { flex: 1; max-width: 300px; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: var(--transition); }
+.search-input:focus { border-color: var(--accent); }
+.filter-select { padding: 7px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--text); outline: none; cursor: pointer; }
+
+/* ======== MODAL ======== */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow2); width: 520px; max-width: 90vw; max-height: 85vh; display: flex; flex-direction: column; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.modal-header h3 { font-size: 16px; font-weight: 500; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text3); padding: 4px 8px; border-radius: 4px; }
+.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12.5px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
+.form-input { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: var(--transition); }
+.form-input:focus { border-color: var(--accent); }
+.form-row { display: flex; gap: 12px; }
+.form-row > * { flex: 1; }
+.form-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.form-check input { accent-color: var(--accent); }
+textarea.form-input { resize: vertical; min-height: 60px; }
+select.form-input { cursor: pointer; }
+
+/* Color picker */
+.color-options { display: flex; gap: 6px; flex-wrap: wrap; }
+.color-opt { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: var(--transition); }
+.color-opt:hover { transform: scale(1.1); }
+.color-opt.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--surface); }
+
+/* ======== CONFIRM DIALOG ======== */
+.confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; align-items: center; justify-content: center; }
+.confirm-overlay.show { display: flex; }
+.confirm-box { background: var(--surface); border-radius: var(--radius); padding: 24px; width: 380px; max-width: 90vw; box-shadow: var(--shadow2); text-align: center; }
+.confirm-box h4 { font-size: 15px; margin-bottom: 8px; }
+.confirm-box p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.confirm-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ======== TOAST ======== */
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; color: #fff; animation: toastIn 0.3s ease; }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+.toast.info { background: var(--accent); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ======== SIDEBAR ======== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>日历日程</h1>
+      <p>Calendar &amp; Schedule</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="switchView('day')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        日视图
+      </div>
+      <div class="nav-item" onclick="switchView('week')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="10" x2="8" y2="22"/><line x1="13" y1="10" x2="13" y2="22"/><line x1="18" y1="10" x2="18" y2="22"/></svg>
+        周视图
+      </div>
+      <div class="nav-item" onclick="switchView('month')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="6" y="13" width="3" height="3" rx="0.5"/><rect x="10.5" y="13" width="3" height="3" rx="0.5"/><rect x="15" y="13" width="3" height="3" rx="0.5"/></svg>
+        月视图
+      </div>
+      <div class="nav-item" onclick="switchView('year')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="15" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="16" cy="15" r="1"/><circle cx="8" cy="19" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        年视图
+      </div>
+      <div class="nav-item" onclick="switchView('list')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+        所有日程
+      </div>
+    </nav>
+
+    <!-- Mini Calendar -->
+    <div class="mini-cal" id="mini-cal"></div>
+
+    <div class="sidebar-switch">
+      <div class="switch-label">切换系统</div>
+      <a class="switch-item" href="Index.html">
+        <span class="switch-dot"></span>
+        工作复盘
+      </a>
+      <a class="switch-item" href="kanban.html">
+        <span class="switch-dot"></span>
+        项目看板
+      </a>
+      <a class="switch-item" href="usage.html">
+        <span class="switch-dot"></span>
+        使用时长
+      </a>
+      <span class="switch-item active">
+        <span class="switch-dot"></span>
+        日历日程
+      </span>
+    </div>
+    <div class="sidebar-footer">
+      <span id="theme-toggle" style="cursor:pointer;" onclick="toggleTheme()">&#9790; 切换主题</span>
+    </div>
+  </aside>
+
+  <!-- ======== MAIN ======== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon" onclick="navigate(-1)" title="上一个">&#9664;</button>
+        <button class="btn btn-sm" onclick="goToday()">今天</button>
+        <button class="btn-icon" onclick="navigate(1)" title="下一个">&#9654;</button>
+        <span class="topbar-title" id="topbar-title"></span>
+      </div>
+      <div class="topbar-actions">
+        <div class="view-tabs">
+          <button class="view-tab active" data-view="day" onclick="switchView('day')">日</button>
+          <button class="view-tab" data-view="week" onclick="switchView('week')">周</button>
+          <button class="view-tab" data-view="month" onclick="switchView('month')">月</button>
+          <button class="view-tab" data-view="year" onclick="switchView('year')">年</button>
+        </div>
+        <button class="btn btn-primary" onclick="openNewEvent()">+ 新建日程</button>
+      </div>
+    </div>
+
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<!-- ======== EVENT MODAL ======== -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">新建日程</h3>
+      <button class="modal-close" onclick="closeModal('event-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">标题 *</label>
+        <input class="form-input" id="ef-title" placeholder="日程标题" maxlength="100">
+      </div>
+      <div class="form-group">
+        <label class="form-check"><input type="checkbox" id="ef-allday" onchange="toggleAllday()"> 全天事件</label>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">开始日期 *</label>
+          <input class="form-input" type="date" id="ef-start-date">
+        </div>
+        <div class="form-group" id="ef-start-time-wrap">
+          <label class="form-label">开始时间</label>
+          <select class="form-input" id="ef-start-time"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">结束日期 *</label>
+          <input class="form-input" type="date" id="ef-end-date">
+        </div>
+        <div class="form-group" id="ef-end-time-wrap">
+          <label class="form-label">结束时间</label>
+          <select class="form-input" id="ef-end-time"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <select class="form-input" id="ef-category">
+            <option value="work">工作</option>
+            <option value="personal">个人</option>
+            <option value="meeting">会议</option>
+            <option value="deadline">截止日</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">提醒</label>
+          <select class="form-input" id="ef-reminder">
+            <option value="0">无提醒</option>
+            <option value="5">5 分钟前</option>
+            <option value="10">10 分钟前</option>
+            <option value="15">15 分钟前</option>
+            <option value="30">30 分钟前</option>
+            <option value="60">1 小时前</option>
+            <option value="1440">1 天前</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">描述</label>
+        <textarea class="form-input" id="ef-desc" rows="3" placeholder="详细描述（可选）"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="ef-delete-btn" style="margin-right:auto; color:var(--red); border-color:var(--red); display:none;" onclick="deleteCurrentEvent()">删除</button>
+      <button class="btn" onclick="closeModal('event-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEvent()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== CONFIRM DIALOG ======== -->
+<div class="confirm-overlay" id="confirm-dialog">
+  <div class="confirm-box">
+    <h4 id="confirm-title">确认</h4>
+    <p id="confirm-msg">确定要执行此操作吗？</p>
+    <div class="confirm-actions">
+      <button class="btn" onclick="closeConfirm(false)">取消</button>
+      <button class="btn btn-primary" onclick="closeConfirm(true)">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ======== GLOBALS ========
+let events = [];           // all calendar events
+let kanbanTasks = [];      // synced from kanban
+let currentView = 'month'; // day | week | month | year | list
+let currentDate = new Date();
+let editingEventId = null;
+let confirmResolve = null;
+
+const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
+const WEEKDAYS_FULL = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+const CAT_LABELS = { work: '工作', personal: '个人', meeting: '会议', deadline: '截止日', task: '任务', other: '其他' };
+const CAT_COLORS = { work: '#1F4E79', personal: '#2d6a4f', meeting: '#7c3aed', deadline: '#9b1c1c', task: '#92400e', other: '#888' };
+const CAT_COLORS_DARK = { work: '#60a5fa', personal: '#4ade80', meeting: '#a78bfa', deadline: '#f87171', task: '#fbbf24', other: '#94a3b8' };
+
+// ======== UTILS ========
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function fmtDate(d) { return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function isSameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+function getCatColor(cat) { return isDark() ? (CAT_COLORS_DARK[cat]||CAT_COLORS_DARK.other) : (CAT_COLORS[cat]||CAT_COLORS.other); }
+
+function getMonday(d) {
+  const dt = new Date(d);
+  const day = dt.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  dt.setDate(dt.getDate() + diff);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+
+function timeToMinutes(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function minutesToTime(m) {
+  return `${pad2(Math.floor(m/60))}:${pad2(m%60)}`;
+}
+
+// ======== DATA PERSISTENCE ========
+// Try Electron API first, then localStorage fallback
+async function loadEvents() {
+  try {
+    if (window.electronAPI && window.electronAPI.readEvents) {
+      events = await window.electronAPI.readEvents();
+    } else {
+      events = JSON.parse(localStorage.getItem('calendar_events') || '[]');
+    }
+  } catch { events = []; }
+}
+
+async function persistEvent(ev) {
+  try {
+    if (window.electronAPI && window.electronAPI.saveEvent) {
+      await window.electronAPI.saveEvent(ev);
+    } else {
+      const idx = events.findIndex(e => e.id === ev.id);
+      if (idx >= 0) events[idx] = ev; else events.push(ev);
+      localStorage.setItem('calendar_events', JSON.stringify(events));
+    }
+  } catch (e) { console.error('Save event failed:', e); }
+}
+
+async function removeEvent(id) {
+  try {
+    if (window.electronAPI && window.electronAPI.deleteEvent) {
+      await window.electronAPI.deleteEvent(id);
+    } else {
+      localStorage.setItem('calendar_events', JSON.stringify(events));
+    }
+  } catch (e) { console.error('Delete event failed:', e); }
+}
+
+// Sync kanban tasks as calendar events
+async function syncKanbanTasks() {
+  kanbanTasks = [];
+  try {
+    let projects = [];
+    if (window.electronAPI && window.electronAPI.readProjects) {
+      projects = await window.electronAPI.readProjects();
+    }
+    for (const proj of projects) {
+      const allTasks = [...(proj.tasks || [])];
+      for (const sp of (proj.subProjects || [])) {
+        for (const t of (sp.tasks || [])) {
+          allTasks.push({ ...t, _spName: sp.name });
+        }
+      }
+      for (const t of allTasks) {
+        if (t.dueDate) {
+          kanbanTasks.push({
+            id: 'kt_' + t.id,
+            title: t.title,
+            startDate: t.dueDate,
+            startTime: '',
+            endDate: t.dueDate,
+            endTime: '',
+            allDay: true,
+            category: 'task',
+            description: `项目：${proj.name}${t._spName ? '\n子项目：'+t._spName : ''}\n优先级：${t.priority||'普通'}\n状态：${t.status||'待办'}`,
+            linkedTaskId: t.id,
+            linkedProjectId: proj.id,
+            isKanban: true
+          });
+        }
+      }
+    }
+  } catch (e) { console.error('Sync kanban failed:', e); }
+}
+
+// ======== GET ALL EVENTS (user + kanban) ========
+function getAllEvents() {
+  return [...events, ...kanbanTasks];
+}
+
+function getEventsForDate(dateStr) {
+  return getAllEvents().filter(ev => {
+    if (ev.startDate === dateStr) return true;
+    if (ev.endDate === dateStr) return true;
+    if (ev.startDate < dateStr && ev.endDate > dateStr) return true;
+    return false;
+  });
+}
+
+function getEventsInRange(startStr, endStr) {
+  return getAllEvents().filter(ev => {
+    return ev.startDate <= endStr && ev.endDate >= startStr;
+  });
+}
+
+// ======== TIME SELECT POPULATION ========
+function populateTimeSelects() {
+  const opts = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      opts.push(`${pad2(h)}:${pad2(m)}`);
+    }
+  }
+  for (const id of ['ef-start-time', 'ef-end-time']) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = opts.map(t => `<option value="${t}">${t}</option>`).join('');
+  }
+}
+
+// ======== TOAST ========
+function showToast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+
+// ======== CONFIRM ========
+function showConfirm(title, msg) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-dialog').classList.add('show');
+  return new Promise(resolve => { confirmResolve = resolve; });
+}
+function closeConfirm(result) {
+  document.getElementById('confirm-dialog').classList.remove('show');
+  if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+}
+
+// ======== MODAL ========
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function toggleAllday() {
+  const allday = document.getElementById('ef-allday').checked;
+  document.getElementById('ef-start-time-wrap').style.display = allday ? 'none' : '';
+  document.getElementById('ef-end-time-wrap').style.display = allday ? 'none' : '';
+}
+
+// ======== EVENT FORM ========
+function openNewEvent(date, time) {
+  editingEventId = null;
+  document.getElementById('modal-title').textContent = '新建日程';
+  document.getElementById('ef-delete-btn').style.display = 'none';
+  document.getElementById('ef-title').value = '';
+  document.getElementById('ef-allday').checked = false;
+  const d = date || fmtDate(currentDate);
+  document.getElementById('ef-start-date').value = d;
+  document.getElementById('ef-end-date').value = d;
+  document.getElementById('ef-start-time').value = time || '09:00';
+  document.getElementById('ef-end-time').value = time ? minutesToTime(timeToMinutes(time) + 60) : '10:00';
+  document.getElementById('ef-category').value = 'work';
+  document.getElementById('ef-reminder').value = '0';
+  document.getElementById('ef-desc').value = '';
+  toggleAllday();
+  openModal('event-modal');
+  document.getElementById('ef-title').focus();
+}
+
+function openEditEvent(evId) {
+  const ev = getAllEvents().find(e => e.id === evId);
+  if (!ev) return;
+  if (ev.isKanban) {
+    showToast('看板任务请在项目看板中编辑', 'info');
+    return;
+  }
+  editingEventId = ev.id;
+  document.getElementById('modal-title').textContent = '编辑日程';
+  document.getElementById('ef-delete-btn').style.display = '';
+  document.getElementById('ef-title').value = ev.title;
+  document.getElementById('ef-allday').checked = !!ev.allDay;
+  document.getElementById('ef-start-date').value = ev.startDate;
+  document.getElementById('ef-end-date').value = ev.endDate;
+  document.getElementById('ef-start-time').value = ev.startTime || '09:00';
+  document.getElementById('ef-end-time').value = ev.endTime || '10:00';
+  document.getElementById('ef-category').value = ev.category || 'work';
+  document.getElementById('ef-reminder').value = String(ev.reminder || 0);
+  document.getElementById('ef-desc').value = ev.description || '';
+  toggleAllday();
+  openModal('event-modal');
+}
+
+async function saveEvent() {
+  const title = document.getElementById('ef-title').value.trim();
+  if (!title) { showToast('请填写标题', 'error'); return; }
+  const startDate = document.getElementById('ef-start-date').value;
+  const endDate = document.getElementById('ef-end-date').value;
+  if (!startDate || !endDate) { showToast('请填写日期', 'error'); return; }
+  if (endDate < startDate) { showToast('结束日期不能早于开始日期', 'error'); return; }
+
+  const allDay = document.getElementById('ef-allday').checked;
+  const startTime = allDay ? '' : document.getElementById('ef-start-time').value;
+  const endTime = allDay ? '' : document.getElementById('ef-end-time').value;
+
+  if (!allDay && startDate === endDate && startTime >= endTime) {
+    showToast('结束时间需晚于开始时间', 'error'); return;
+  }
+
+  const ev = {
+    id: editingEventId || genId(),
+    title,
+    startDate, startTime, endDate, endTime,
+    allDay,
+    category: document.getElementById('ef-category').value,
+    reminder: parseInt(document.getElementById('ef-reminder').value) || 0,
+    description: document.getElementById('ef-desc').value.trim(),
+    createdAt: editingEventId ? (events.find(e=>e.id===editingEventId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (editingEventId) {
+    const idx = events.findIndex(e => e.id === editingEventId);
+    if (idx >= 0) events[idx] = ev;
+  } else {
+    events.push(ev);
+  }
+
+  await persistEvent(ev);
+  closeModal('event-modal');
+  showToast(editingEventId ? '日程已更新' : '日程已创建', 'success');
+  editingEventId = null;
+  renderView();
+  renderMiniCal();
+}
+
+async function deleteCurrentEvent() {
+  if (!editingEventId) return;
+  const yes = await showConfirm('确认删除', '删除后不可恢复，确定删除此日程？');
+  if (!yes) return;
+  events = events.filter(e => e.id !== editingEventId);
+  await removeEvent(editingEventId);
+  closeModal('event-modal');
+  showToast('日程已删除', 'success');
+  editingEventId = null;
+  renderView();
+  renderMiniCal();
+}
+
+// ======== THEME ========
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? '' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  renderView();
+  renderMiniCal();
+}
+
+function loadTheme() {
+  const t = localStorage.getItem('theme');
+  if (t) document.documentElement.setAttribute('data-theme', t);
+}
+
+// ======== NAVIGATION ========
+function navigate(dir) {
+  switch (currentView) {
+    case 'day':
+      currentDate.setDate(currentDate.getDate() + dir);
+      break;
+    case 'week':
+      currentDate.setDate(currentDate.getDate() + dir * 7);
+      break;
+    case 'month':
+      currentDate.setMonth(currentDate.getMonth() + dir);
+      break;
+    case 'year':
+      currentDate.setFullYear(currentDate.getFullYear() + dir);
+      break;
+  }
+  renderView();
+  renderMiniCal();
+}
+
+function goToday() {
+  currentDate = new Date();
+  renderView();
+  renderMiniCal();
+}
+
+function switchView(view) {
+  currentView = view;
+  // Update sidebar
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach((n, i) => {
+    const views = ['day', 'week', 'month', 'year', 'list'];
+    n.classList.toggle('active', views[i] === view);
+  });
+  // Update view tabs
+  document.querySelectorAll('.view-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+  renderView();
+}
+
+// ======== RENDER DISPATCHER ========
+function renderView() {
+  updateTopbarTitle();
+  const c = document.getElementById('content');
+  switch (currentView) {
+    case 'day': renderDayView(c); break;
+    case 'week': renderWeekView(c); break;
+    case 'month': renderMonthView(c); break;
+    case 'year': renderYearView(c); break;
+    case 'list': renderListView(c); break;
+  }
+}
+
+function updateTopbarTitle() {
+  const el = document.getElementById('topbar-title');
+  const y = currentDate.getFullYear();
+  const m = currentDate.getMonth();
+  const d = currentDate.getDate();
+  switch (currentView) {
+    case 'day':
+      el.textContent = `${y}年${m+1}月${d}日 ${WEEKDAYS_FULL[(currentDate.getDay()+6)%7]}`;
+      break;
+    case 'week': {
+      const mon = getMonday(currentDate);
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      el.textContent = `${mon.getFullYear()}年${mon.getMonth()+1}月${mon.getDate()}日 - ${sun.getMonth()+1}月${sun.getDate()}日`;
+      break;
+    }
+    case 'month':
+      el.textContent = `${y}年${m+1}月`;
+      break;
+    case 'year':
+      el.textContent = `${y}年`;
+      break;
+    case 'list':
+      el.textContent = '所有日程';
+      break;
+  }
+}
+
+// ======== DAY VIEW ========
+function renderDayView(container) {
+  const dateStr = fmtDate(currentDate);
+  const dayEvents = getEventsForDate(dateStr);
+  const allDayEvs = dayEvents.filter(e => e.allDay || (e.startDate !== e.endDate));
+  const timedEvs = dayEvents.filter(e => !e.allDay && e.startDate === e.endDate);
+
+  let html = `<div class="timeline-view">`;
+  // All day section
+  html += `<div class="allday-section" style="position:relative;">`;
+  html += `<span class="allday-label">全天</span>`;
+  for (const ev of allDayEvs) {
+    html += `<div class="allday-event cat-${ev.category||'other'}" onclick="openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="timeline-body" id="timeline-body">`;
+  html += `<div class="day-grid timeline-grid">`;
+  // Time labels
+  html += `<div class="time-labels">`;
+  for (let h = 0; h < 24; h++) {
+    html += `<div class="time-label">${pad2(h)}:00</div>`;
+  }
+  html += `</div>`;
+
+  // Hour lines
+  for (let h = 0; h < 24; h++) {
+    html += `<div class="hour-line" style="top:${h*60}px;"></div>`;
+  }
+
+  // Day column
+  html += `<div class="day-column" onclick="onTimelineClick(event, '${dateStr}')">`;
+  for (const ev of timedEvs) {
+    const top = timeToMinutes(ev.startTime);
+    const height = Math.max(timeToMinutes(ev.endTime) - top, 15);
+    html += `<div class="event-block cat-${ev.category||'other'}" style="top:${top}px; height:${height}px;" onclick="event.stopPropagation(); openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">
+      <div class="ev-title">${escHtml(ev.title)}</div>
+      <div class="ev-time">${ev.startTime} - ${ev.endTime}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Now line
+  const now = new Date();
+  if (isSameDay(now, currentDate)) {
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    html += `<div class="now-line" style="top:${nowMin}px;"></div>`;
+  }
+
+  html += `</div></div></div>`;
+  container.innerHTML = html;
+  scrollToNow();
+}
+
+// ======== WEEK VIEW ========
+function renderWeekView(container) {
+  const monday = getMonday(currentDate);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  const startStr = fmtDate(days[0]);
+  const endStr = fmtDate(days[6]);
+  const weekEvents = getEventsInRange(startStr, endStr);
+  const allDayEvs = weekEvents.filter(e => e.allDay || (e.startDate !== e.endDate));
+  const now = new Date();
+
+  let html = `<div class="timeline-view">`;
+
+  // All day
+  html += `<div class="allday-section" style="position:relative;">`;
+  html += `<span class="allday-label">全天</span>`;
+  for (const ev of allDayEvs) {
+    html += `<div class="allday-event cat-${ev.category||'other'}" onclick="openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
+  }
+  html += `</div>`;
+
+  // Week header
+  html += `<div class="week-header">`;
+  html += `<div></div>`;
+  for (const d of days) {
+    const isToday = isSameDay(d, now);
+    html += `<div class="week-header-cell ${isToday?'today':''}">
+      <div class="weekday">${WEEKDAYS_FULL[(d.getDay()+6)%7]}</div>
+      <div class="datenum">${d.getDate()}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="timeline-body" id="timeline-body">`;
+  html += `<div class="week-grid timeline-grid">`;
+  // Time labels
+  html += `<div class="time-labels">`;
+  for (let h = 0; h < 24; h++) {
+    html += `<div class="time-label">${pad2(h)}:00</div>`;
+  }
+  html += `</div>`;
+
+  // Hour lines
+  for (let h = 0; h < 24; h++) {
+    html += `<div class="hour-line" style="top:${h*60}px;"></div>`;
+  }
+
+  // Day columns
+  for (let i = 0; i < 7; i++) {
+    const dateStr = fmtDate(days[i]);
+    const dayTimedEvs = weekEvents.filter(e => !e.allDay && e.startDate === e.endDate && e.startDate === dateStr);
+    html += `<div class="week-col" onclick="onTimelineClick(event, '${dateStr}')" style="grid-column:${i+2};">`;
+    for (const ev of dayTimedEvs) {
+      const top = timeToMinutes(ev.startTime);
+      const height = Math.max(timeToMinutes(ev.endTime) - top, 15);
+      html += `<div class="event-block cat-${ev.category||'other'}" style="top:${top}px; height:${height}px;" onclick="event.stopPropagation(); openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">
+        <div class="ev-title">${escHtml(ev.title)}</div>
+        <div class="ev-time">${ev.startTime} - ${ev.endTime}</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Now line
+  const monStr = fmtDate(monday);
+  const sunStr = fmtDate(days[6]);
+  if (fmtDate(now) >= monStr && fmtDate(now) <= sunStr) {
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    html += `<div class="now-line" style="top:${nowMin}px;"></div>`;
+  }
+
+  html += `</div></div></div>`;
+  container.innerHTML = html;
+  scrollToNow();
+}
+
+function scrollToNow() {
+  setTimeout(() => {
+    const body = document.getElementById('timeline-body');
+    if (!body) return;
+    const now = new Date();
+    const scroll = Math.max(0, now.getHours() * 60 + now.getMinutes() - 200);
+    body.scrollTop = scroll;
+  }, 50);
+}
+
+function onTimelineClick(e, dateStr) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const scrollTop = e.currentTarget.closest('.timeline-body')?.scrollTop || 0;
+  const y = e.clientY - rect.top + scrollTop;
+  let minutes = Math.floor(y / 60) * 60 + Math.round((y % 60) / 5) * 5;
+  minutes = Math.max(0, Math.min(minutes, 23 * 60 + 55));
+  openNewEvent(dateStr, minutesToTime(minutes));
+}
+
+// ======== MONTH VIEW ========
+function renderMonthView(container) {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startWeekday = (firstDay.getDay() + 6) % 7; // Monday = 0
+  const today = new Date();
+
+  // Build 6 weeks grid
+  const cells = [];
+  const startDate = new Date(firstDay);
+  startDate.setDate(startDate.getDate() - startWeekday);
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    cells.push(d);
+  }
+
+  const startStr = fmtDate(cells[0]);
+  const endStr = fmtDate(cells[41]);
+  const monthEvents = getEventsInRange(startStr, endStr);
+
+  let html = `<div class="month-view">`;
+  html += `<div class="month-grid-header">`;
+  for (const w of WEEKDAYS) html += `<div class="month-grid-header-cell">${w}</div>`;
+  html += `</div>`;
+  html += `<div class="month-grid">`;
+
+  for (const cell of cells) {
+    const dateStr = fmtDate(cell);
+    const isOther = cell.getMonth() !== month;
+    const isToday = isSameDay(cell, today);
+    const dayEvs = monthEvents.filter(ev => {
+      return ev.startDate <= dateStr && ev.endDate >= dateStr;
+    });
+
+    html += `<div class="month-cell ${isOther?'other-month':''} ${isToday?'today':''}" onclick="currentDate=new Date(${cell.getFullYear()},${cell.getMonth()},${cell.getDate()}); switchView('day');">`;
+    html += `<div class="month-cell-date">${cell.getDate()}</div>`;
+    const show = dayEvs.slice(0, 3);
+    for (const ev of show) {
+      html += `<div class="month-event cat-${ev.category||'other'}" onclick="event.stopPropagation(); openEditEvent('${ev.id}')" title="${escHtml(ev.title)}">${escHtml(ev.title)}</div>`;
+    }
+    if (dayEvs.length > 3) {
+      html += `<div class="month-more" onclick="event.stopPropagation(); currentDate=new Date(${cell.getFullYear()},${cell.getMonth()},${cell.getDate()}); switchView('day');">+${dayEvs.length - 3} 更多</div>`;
+    }
+    html += `</div>`;
+  }
+
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
+
+// ======== YEAR VIEW ========
+function renderYearView(container) {
+  const year = currentDate.getFullYear();
+  const today = new Date();
+  const allEvs = getAllEvents();
+
+  let html = `<div class="year-view"><div class="year-grid">`;
+
+  for (let m = 0; m < 12; m++) {
+    const first = new Date(year, m, 1);
+    const last = new Date(year, m + 1, 0);
+    const startWd = (first.getDay() + 6) % 7;
+
+    html += `<div class="year-month-card" onclick="currentDate=new Date(${year},${m},1); switchView('month');">`;
+    html += `<div class="year-month-title">${MONTHS[m]}</div>`;
+    html += `<div class="year-mini-grid">`;
+    for (const w of WEEKDAYS) html += `<div class="year-mini-weekday">${w}</div>`;
+
+    // Empty cells
+    for (let i = 0; i < startWd; i++) html += `<div class="year-mini-day other-month"></div>`;
+
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dateStr = `${year}-${pad2(m+1)}-${pad2(d)}`;
+      const isToday = year === today.getFullYear() && m === today.getMonth() && d === today.getDate();
+      const hasEvent = allEvs.some(ev => ev.startDate <= dateStr && ev.endDate >= dateStr);
+      html += `<div class="year-mini-day ${isToday?'today':''} ${hasEvent?'has-event':''}">${d}</div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
+
+// ======== LIST VIEW ========
+function renderListView(container) {
+  const allEvs = getAllEvents().sort((a, b) => {
+    const cmp = a.startDate.localeCompare(b.startDate);
+    if (cmp !== 0) return cmp;
+    return (a.startTime || '').localeCompare(b.startTime || '');
+  });
+
+  let html = `<div class="filter-bar">
+    <input class="search-input" placeholder="搜索日程..." oninput="filterListView()" id="list-search">
+    <select class="filter-select" onchange="filterListView()" id="list-filter">
+      <option value="">全部分类</option>
+      <option value="work">工作</option>
+      <option value="personal">个人</option>
+      <option value="meeting">会议</option>
+      <option value="deadline">截止日</option>
+      <option value="task">任务</option>
+      <option value="other">其他</option>
+    </select>
+  </div>`;
+
+  html += `<div class="list-view" id="list-content">`;
+  html += renderListEvents(allEvs);
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function renderListEvents(evs) {
+  if (!evs.length) return `<div class="list-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div>暂无日程</div></div>`;
+
+  // Group by date
+  const groups = {};
+  for (const ev of evs) {
+    const key = ev.startDate;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(ev);
+  }
+
+  let html = '';
+  const today = fmtDate(new Date());
+  for (const [date, items] of Object.entries(groups)) {
+    const d = parseDate(date);
+    const label = date === today ? '今天' : `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${WEEKDAYS_FULL[(d.getDay()+6)%7]}`;
+    html += `<div class="list-section">`;
+    html += `<div class="list-section-title">${label}</div>`;
+    for (const ev of items) {
+      const timeStr = ev.allDay ? '全天' : `${ev.startTime} - ${ev.endTime}`;
+      html += `<div class="list-event" onclick="openEditEvent('${ev.id}')">
+        <div class="list-event-dot" style="background:${getCatColor(ev.category)}"></div>
+        <div class="list-event-info">
+          <div class="list-event-title">${escHtml(ev.title)}</div>
+          <div class="list-event-meta">${timeStr}${ev.startDate !== ev.endDate ? ' ~ '+ev.endDate : ''}</div>
+        </div>
+        <span class="list-event-cat cat-${ev.category||'other'}" style="background:var(--cat-bg); color:var(--cat-color);">${CAT_LABELS[ev.category]||'其他'}</span>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  return html;
+}
+
+function filterListView() {
+  const q = (document.getElementById('list-search')?.value || '').toLowerCase();
+  const cat = document.getElementById('list-filter')?.value || '';
+  let evs = getAllEvents();
+  if (q) evs = evs.filter(e => e.title.toLowerCase().includes(q) || (e.description||'').toLowerCase().includes(q));
+  if (cat) evs = evs.filter(e => e.category === cat);
+  evs.sort((a, b) => a.startDate.localeCompare(b.startDate) || (a.startTime||'').localeCompare(b.startTime||''));
+  const c = document.getElementById('list-content');
+  if (c) c.innerHTML = renderListEvents(evs);
+}
+
+// ======== MINI CALENDAR ========
+function renderMiniCal() {
+  const el = document.getElementById('mini-cal');
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const startWd = (first.getDay() + 6) % 7;
+  const today = new Date();
+  const selectedStr = fmtDate(currentDate);
+  const allEvs = getAllEvents();
+
+  let html = `<div class="mini-cal-header">
+    <button onclick="event.stopPropagation(); miniCalNav(-1)">&lsaquo;</button>
+    <span>${year}年${month+1}月</span>
+    <button onclick="event.stopPropagation(); miniCalNav(1)">&rsaquo;</button>
+  </div>`;
+  html += `<div class="mini-cal-grid">`;
+  for (const w of WEEKDAYS) html += `<div class="mini-cal-weekday">${w}</div>`;
+
+  // Previous month days
+  const prevLast = new Date(year, month, 0);
+  for (let i = startWd - 1; i >= 0; i--) {
+    const d = prevLast.getDate() - i;
+    html += `<div class="mini-cal-day other-month">${d}</div>`;
+  }
+
+  for (let d = 1; d <= last.getDate(); d++) {
+    const dateStr = `${year}-${pad2(month+1)}-${pad2(d)}`;
+    const isToday = year === today.getFullYear() && month === today.getMonth() && d === today.getDate();
+    const isSel = dateStr === selectedStr;
+    const hasEv = allEvs.some(ev => ev.startDate <= dateStr && ev.endDate >= dateStr);
+    html += `<div class="mini-cal-day ${isToday?'today':''} ${isSel?'selected':''} ${hasEv?'has-event':''}" onclick="event.stopPropagation(); miniCalSelect(${year},${month},${d})">${d}</div>`;
+  }
+
+  // Next month days
+  const totalCells = startWd + last.getDate();
+  const remaining = (7 - totalCells % 7) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="mini-cal-day other-month">${i}</div>`;
+  }
+
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function miniCalNav(dir) {
+  currentDate.setMonth(currentDate.getMonth() + dir);
+  renderMiniCal();
+}
+
+function miniCalSelect(y, m, d) {
+  currentDate = new Date(y, m, d);
+  if (currentView === 'month' || currentView === 'year' || currentView === 'list') {
+    switchView('day');
+  } else {
+    renderView();
+  }
+  renderMiniCal();
+}
+
+// ======== INIT ========
+async function init() {
+  loadTheme();
+  populateTimeSelects();
+  await loadEvents();
+  await syncKanbanTasks();
+  switchView('month');
+  renderMiniCal();
+
+  // Auto-refresh now line every minute
+  setInterval(() => {
+    if (currentView === 'day' || currentView === 'week') renderView();
+  }, 60000);
+}
+
+init();
+</script>
+</body>
+</html>
