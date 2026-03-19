@@ -3,3 +3,5 @@ temp.md
 需求.md
 node_modules/
 dist/
+doc/
+.claude/
