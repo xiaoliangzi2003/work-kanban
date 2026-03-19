@@ -345,13 +345,6 @@ textarea.form-input { resize: vertical; min-height: 200px; line-height: 1.8; }
         </svg>
         新建纪要
       </div>
-      <div class="nav-item" id="nav-watch" style="cursor:default; pointer-events:none;">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-        </svg>
-        后台监听
-        <span class="watch-badge on" id="watch-badge"><span class="watch-badge-dot"></span>运行中</span>
-      </div>
       <div class="nav-item" id="nav-settings" onclick="showView('settings')">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>
@@ -386,17 +379,6 @@ textarea.form-input { resize: vertical; min-height: 200px; line-height: 1.8; }
         <button class="btn btn-primary" onclick="showView('new')">+ 新建纪要</button>
       </div>
     </div>
-    <!-- 腾讯会议实时状态栏 -->
-    <div class="wemeet-status-bar" id="wemeet-status-bar">
-      <span class="wemeet-dot" id="wemeet-dot"></span>
-      <span class="wemeet-status-label" id="wemeet-status-label">正在检测腾讯会议...</span>
-      <span class="wemeet-status-detail" id="wemeet-status-detail"></span>
-      <span class="wemeet-badge on" id="wemeet-watch-badge">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
-        后台监听中
-      </span>
-    </div>
-
     <div class="content" id="content"></div>
   </div>
 </div>
@@ -1129,22 +1111,6 @@ async function init() {
   await loadConfig();
   await loadMeetings();
   showView('list');
-
-  // 注册后台监听事件（background watcher 始终运行，无需手动开启）
-  if (window.electronAPI) {
-    window.electronAPI.onMeetingStarted(onMeetingStarted);
-    window.electronAPI.onMeetingEnded(onMeetingEnded);
-    window.electronAPI.onWemeetStatus(updateWemeetStatusBar);
-
-    // 页面加载时立即查询当前进程状态，刷新状态栏
-    try {
-      const status = await window.electronAPI.getWemeetStatus();
-      updateWemeetStatusBar(status);
-    } catch {}
-  } else {
-    // Web 预览模式：显示说明文字
-    updateWemeetStatusBar({ running: false, meetingActive: false });
-  }
 }
 
 init();
