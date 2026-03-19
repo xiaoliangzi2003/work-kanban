@@ -29,6 +29,8 @@
       "preload.js",
       "kanban.html",
       "Index.html",
+      "usage.html",
+      "calendar.html",
       "data/**/*",
       "node_modules/echarts/dist/echarts.min.js"
     ],
@@ -47,7 +49,7 @@
           ]
         }
       ],
-      "icon": null,
+      "icon": "icon.ico",
       "signAndEditExecutable": false
     },
     "nsis": {
