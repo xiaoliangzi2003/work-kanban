@@ -227,6 +227,113 @@ ipcMain.handle('select-data-dir', async () => {
   return result.filePaths[0];
 });
 
+// ========== IPC: 开机自启 ==========
+ipcMain.handle('get-auto-launch', async () => {
+  const loginSettings = app.getLoginItemSettings();
+  return loginSettings.openAtLogin;
+});
+
+ipcMain.handle('set-auto-launch', async (event, enabled) => {
+  app.setLoginItemSettings({ openAtLogin: enabled });
+  return true;
+});
+
+// ========== IPC: 项目配置文件 ==========
+function getProjectConfigDir(projectId) {
+  const dir = path.join(getDataDir(), 'projects', `project_${projectId}_configs`);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+ipcMain.handle('save-project-config-file', async (event, projectId, config) => {
+  const dir = getProjectConfigDir(projectId);
+  const filePath = path.join(dir, `config_${config.id}.json`);
+  fs.writeFileSync(filePath, JSON.stringify(config, null, 2), 'utf-8');
+  return true;
+});
+
+ipcMain.handle('read-project-config-files', async (event, projectId) => {
+  const dir = getProjectConfigDir(projectId);
+  const files = fs.readdirSync(dir).filter(f => f.startsWith('config_') && f.endsWith('.json'));
+  const configs = [];
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(dir, file), 'utf-8');
+      configs.push(JSON.parse(content));
+    } catch {}
+  }
+  return configs;
+});
+
+ipcMain.handle('delete-project-config-file', async (event, projectId, configId) => {
+  const dir = getProjectConfigDir(projectId);
+  const filePath = path.join(dir, `config_${configId}.json`);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  return true;
+});
+
+ipcMain.handle('upload-project-config-file', async (event, projectId) => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: '上传配置文件',
+    filters: [
+      { name: '配置文件', extensions: ['json', 'txt', 'md', 'properties', 'yaml', 'yml', 'xml'] },
+      { name: '所有文件', extensions: ['*'] }
+    ],
+    properties: ['openFile']
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  const filePath = result.filePaths[0];
+  const fileName = path.basename(filePath);
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const ext = path.extname(fileName).slice(1).toLowerCase();
+  return { fileName, content, ext };
+});
+
+ipcMain.handle('download-config-file', async (event, fileName, content) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: '下载配置文件',
+    defaultPath: fileName
+  });
+  if (result.canceled || !result.filePath) return false;
+  fs.writeFileSync(result.filePath, content, 'utf-8');
+  return true;
+});
+
+// ========== IPC: 知识库 ==========
+function getKnowledgeDir(projectId) {
+  const dir = path.join(getDataDir(), 'projects', `project_${projectId}_knowledge`);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+ipcMain.handle('read-knowledge-list', async (event, projectId) => {
+  const dir = getKnowledgeDir(projectId);
+  const files = fs.readdirSync(dir).filter(f => f.startsWith('kb_') && f.endsWith('.json'));
+  const items = [];
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(dir, file), 'utf-8');
+      items.push(JSON.parse(content));
+    } catch {}
+  }
+  items.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+  return items;
+});
+
+ipcMain.handle('save-knowledge', async (event, projectId, kb) => {
+  const dir = getKnowledgeDir(projectId);
+  const filePath = path.join(dir, `kb_${kb.id}.json`);
+  fs.writeFileSync(filePath, JSON.stringify(kb, null, 2), 'utf-8');
+  return true;
+});
+
+ipcMain.handle('delete-knowledge', async (event, projectId, kbId) => {
+  const dir = getKnowledgeDir(projectId);
+  const filePath = path.join(dir, `kb_${kbId}.json`);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  return true;
+});
+
 // ========== IPC: 日历日程 ==========
 
 function getCalendarDir() {

@@ -165,6 +165,7 @@ body {
 .card-calendar { --card-color: #6d28d9; --card-bg: #ede9fe; }
 .card-meeting  { --card-color: #9b1c1c; --card-bg: #fee2e2; }
 .card-people   { --card-color: #0e7490; --card-bg: #e0f2fe; }
+.card-knowledge { --card-color: #7c3aed; --card-bg: #ede9fe; }
 .card-settings { --card-color: #374151; --card-bg: #f3f4f6; }
 
 [data-theme="dark"] .card-review   { --card-color: #60a5fa; --card-bg: #1e3252; }
@@ -173,6 +174,7 @@ body {
 [data-theme="dark"] .card-calendar { --card-color: #a78bfa; --card-bg: #1e1045; }
 [data-theme="dark"] .card-meeting  { --card-color: #f87171; --card-bg: #2d0000; }
 [data-theme="dark"] .card-people   { --card-color: #22d3ee; --card-bg: #083344; }
+[data-theme="dark"] .card-knowledge { --card-color: #a78bfa; --card-bg: #1e1045; }
 [data-theme="dark"] .card-settings { --card-color: #9ca3af; --card-bg: #1f2937; }
 
 /* ======== FOOTER ======== */
@@ -376,8 +378,30 @@ body {
       </div>
     </a>
 
+    <!-- 知识库 -->
+    <a class="module-card card-knowledge" href="knowledge.html">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+        </svg>
+      </div>
+      <div>
+        <div class="card-name">知识库</div>
+        <div class="card-desc">管理项目知识文档，支持 Markdown 格式编写和在线预览。</div>
+      </div>
+      <div class="card-tag">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/></svg>
+        文档管理
+      </div>
+    </a>
+
     <!-- 设置 -->
-    <div class="module-card card-settings" onclick="openSettings()" style="cursor:pointer;">
+    <a class="module-card card-settings" href="settings.html">
       <div class="card-header">
         <div class="card-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -397,39 +421,8 @@ body {
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/></svg>
         全局配置
       </div>
-    </div>
+    </a>
 
-  </div>
-</div>
-
-<!-- SETTINGS PANEL -->
-<div id="settings-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center;">
-  <div style="background:var(--surface); border-radius:20px; padding:32px; width:500px; max-width:90vw; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation: pageIn 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);">
-      <h3 style="font-size:16px; font-weight:600;">全局设置</h3>
-      <button onclick="closeSettings()" style="border:none; background:none; font-size:20px; cursor:pointer; color:var(--text3); padding:4px 8px; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">×</button>
-    </div>
-
-    <div style="margin-bottom:18px;">
-      <div style="font-size:12px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">数据存储目录</div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input id="data-dir-input" readonly style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); font-size:12px; font-family:monospace; color:var(--text2); outline:none;" placeholder="默认：exe 同级 data/ 目录">
-        <button onclick="selectDataDir()" style="padding:9px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); font-size:13px; font-family:inherit; cursor:pointer; color:var(--text); white-space:nowrap; transition:all 0.2s;" onmouseover="this.style.background='var(--accent-light)'" onmouseout="this.style.background='var(--surface2)'">选择目录</button>
-      </div>
-      <div style="font-size:11px; color:var(--text3); margin-top:5px;">更改后下次启动生效，原数据请手动迁移</div>
-    </div>
-
-    <div style="margin-bottom:18px;">
-      <div style="font-size:12px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">界面主题</div>
-      <div style="display:flex; gap:8px;">
-        <button id="btn-light" onclick="setTheme('')" style="flex:1; padding:9px; border-radius:8px; border:2px solid var(--border); background:var(--surface2); font-size:13px; font-family:inherit; cursor:pointer; transition:all 0.2s;">☀ 浅色</button>
-        <button id="btn-dark" onclick="setTheme('dark')" style="flex:1; padding:9px; border-radius:8px; border:2px solid var(--border); background:var(--surface2); font-size:13px; font-family:inherit; cursor:pointer; transition:all 0.2s;">🌙 深色</button>
-      </div>
-    </div>
-
-    <div style="padding-top:16px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px;">
-      <button onclick="closeSettings()" style="padding:9px 20px; border-radius:8px; border:1px solid var(--border); background:transparent; font-size:13px; font-family:inherit; cursor:pointer; color:var(--text); transition:all 0.2s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">关闭</button>
-    </div>
   </div>
 </div>
 
@@ -446,7 +439,6 @@ function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem('theme', t);
   updateThemeIcon();
-  updateThemeBtns();
 }
 function updateThemeIcon() {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -454,39 +446,6 @@ function updateThemeIcon() {
     ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
     : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
 }
-function updateThemeBtns() {
-  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const lb = document.getElementById('btn-light'), db = document.getElementById('btn-dark');
-  if (!lb || !db) return;
-  lb.style.borderColor = dark ? 'var(--border)' : 'var(--accent)';
-  lb.style.color = dark ? 'var(--text2)' : 'var(--accent)';
-  db.style.borderColor = dark ? 'var(--accent)' : 'var(--border)';
-  db.style.color = dark ? 'var(--accent)' : 'var(--text2)';
-}
-
-// ======== SETTINGS ========
-function openSettings() {
-  const el = document.getElementById('settings-overlay');
-  el.style.display = 'flex';
-  updateThemeBtns();
-  if (window.electronAPI?.getDataDir) {
-    window.electronAPI.getDataDir().then(d => {
-      if (d) document.getElementById('data-dir-input').value = d;
-    });
-  }
-}
-function closeSettings() {
-  document.getElementById('settings-overlay').style.display = 'none';
-}
-async function selectDataDir() {
-  if (!window.electronAPI?.selectDataDir) { showToast('仅桌面版支持此功能', 'warn'); return; }
-  const dir = await window.electronAPI.selectDataDir();
-  if (dir) {
-    document.getElementById('data-dir-input').value = dir;
-    showToast('数据目录已更新，重启后生效', 'info');
-  }
-}
-
 // ======== GREETING ========
 function updateGreeting() {
   const h = new Date().getHours();
@@ -506,14 +465,6 @@ function showToast(msg, type = 'info') {
   c.appendChild(t);
   setTimeout(() => { t.classList.add('toast-exit'); t.addEventListener('animationend', () => t.remove()); }, 2800);
 }
-
-// ======== ESC to close settings ========
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeSettings();
-});
-document.getElementById('settings-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('settings-overlay')) closeSettings();
-});
 
 // ======== INIT ========
 (function init() {

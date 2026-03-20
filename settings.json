@@ -1,3 +1,17 @@
 {
-  "theme": "light"
+  "theme": "light",
+  "customRoles": [
+    {
+      "key": "custom_mmyhy2uw",
+      "name": "技术负责人"
+    },
+    {
+      "key": "custom_mmyhyao0",
+      "name": "业务负责人"
+    },
+    {
+      "key": "custom_mmyhyixb",
+      "name": "关联人员"
+    }
+  ]
 }

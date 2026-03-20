@@ -48,6 +48,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onWemeetStatus: (callback) => ipcRenderer.on('wemeet-status', (_, data) => callback(data)),
   getWemeetStatus: () => ipcRenderer.invoke('get-wemeet-status'),
 
+  // 开机自启
+  getAutoLaunch: () => ipcRenderer.invoke('get-auto-launch'),
+  setAutoLaunch: (enabled) => ipcRenderer.invoke('set-auto-launch', enabled),
+
+  // 项目配置文件
+  saveProjectConfigFile: (projectId, config) => ipcRenderer.invoke('save-project-config-file', projectId, config),
+  readProjectConfigFiles: (projectId) => ipcRenderer.invoke('read-project-config-files', projectId),
+  deleteProjectConfigFile: (projectId, configId) => ipcRenderer.invoke('delete-project-config-file', projectId, configId),
+  uploadProjectConfigFile: (projectId) => ipcRenderer.invoke('upload-project-config-file', projectId),
+  downloadConfigFile: (fileName, content) => ipcRenderer.invoke('download-config-file', fileName, content),
+
+  // 知识库
+  readKnowledgeList: (projectId) => ipcRenderer.invoke('read-knowledge-list', projectId),
+  saveKnowledge: (projectId, kb) => ipcRenderer.invoke('save-knowledge', projectId, kb),
+  deleteKnowledge: (projectId, kbId) => ipcRenderer.invoke('delete-knowledge', projectId, kbId),
+
   // 使用时长统计
   startTracking: () => ipcRenderer.invoke('tracking-start'),
   stopTracking: () => ipcRenderer.invoke('tracking-stop'),

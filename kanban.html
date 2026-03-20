@@ -754,74 +754,7 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
       </div>
     </div>
     <div class="form-divider">角色分配与进度</div>
-    <!-- Product Design Role -->
-    <div class="role-section">
-      <div class="role-section-header">产品设计</div>
-      <div class="role-section-body">
-        <div class="ms-wrap" id="sf-role-product_design-ms">
-          <div class="ms-trigger" onclick="toggleMs('sf-role-product_design-ms')">
-            <div class="ms-tags" id="sf-role-product_design-ms-tags"><span class="ms-placeholder">选择产品设计人员</span></div>
-            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="ms-dropdown" id="sf-role-product_design-ms-dropdown"></div>
-        </div>
-        <div class="role-progress-wrap" style="margin-top:8px">
-          <input type="range" min="0" max="100" step="5" id="sf-prog-product_design" value="0" oninput="document.getElementById('sf-prog-product_design-val').textContent=this.value+'%'">
-          <span id="sf-prog-product_design-val">0%</span>
-        </div>
-      </div>
-    </div>
-    <!-- Frontend Role -->
-    <div class="role-section">
-      <div class="role-section-header">前端</div>
-      <div class="role-section-body">
-        <div class="ms-wrap" id="sf-role-frontend-ms">
-          <div class="ms-trigger" onclick="toggleMs('sf-role-frontend-ms')">
-            <div class="ms-tags" id="sf-role-frontend-ms-tags"><span class="ms-placeholder">选择前端人员</span></div>
-            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="ms-dropdown" id="sf-role-frontend-ms-dropdown"></div>
-        </div>
-        <div class="role-progress-wrap" style="margin-top:8px">
-          <input type="range" min="0" max="100" step="5" id="sf-prog-frontend" value="0" oninput="document.getElementById('sf-prog-frontend-val').textContent=this.value+'%'">
-          <span id="sf-prog-frontend-val">0%</span>
-        </div>
-      </div>
-    </div>
-    <!-- Backend Role -->
-    <div class="role-section">
-      <div class="role-section-header">后端</div>
-      <div class="role-section-body">
-        <div class="ms-wrap" id="sf-role-backend-ms">
-          <div class="ms-trigger" onclick="toggleMs('sf-role-backend-ms')">
-            <div class="ms-tags" id="sf-role-backend-ms-tags"><span class="ms-placeholder">选择后端人员</span></div>
-            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="ms-dropdown" id="sf-role-backend-ms-dropdown"></div>
-        </div>
-        <div class="role-progress-wrap" style="margin-top:8px">
-          <input type="range" min="0" max="100" step="5" id="sf-prog-backend" value="0" oninput="document.getElementById('sf-prog-backend-val').textContent=this.value+'%'">
-          <span id="sf-prog-backend-val">0%</span>
-        </div>
-      </div>
-    </div>
-    <!-- Testing Role -->
-    <div class="role-section">
-      <div class="role-section-header">测试</div>
-      <div class="role-section-body">
-        <div class="ms-wrap" id="sf-role-testing-ms">
-          <div class="ms-trigger" onclick="toggleMs('sf-role-testing-ms')">
-            <div class="ms-tags" id="sf-role-testing-ms-tags"><span class="ms-placeholder">选择测试人员</span></div>
-            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="ms-dropdown" id="sf-role-testing-ms-dropdown"></div>
-        </div>
-        <div class="role-progress-wrap" style="margin-top:8px">
-          <input type="range" min="0" max="100" step="5" id="sf-prog-testing" value="0" oninput="document.getElementById('sf-prog-testing-val').textContent=this.value+'%'">
-          <span id="sf-prog-testing-val">0%</span>
-        </div>
-      </div>
-    </div>
+    <div id="sf-roles-container"></div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('subproject-modal')">取消</button>
       <button class="btn btn-primary" onclick="saveSubProjectForm()">保存</button>
@@ -1101,20 +1034,7 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">角色</label>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="pf-role-product_design" style="accent-color:var(--accent2)"> 产品设计
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="pf-role-frontend" style="accent-color:var(--accent2)"> 前端
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="pf-role-backend" style="accent-color:var(--accent2)"> 后端
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="pf-role-testing" style="accent-color:var(--accent2)"> 测试
-          </label>
-        </div>
+        <div id="pf-roles-container" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px"></div>
       </div>
     </div>
     <div class="modal-actions">
@@ -1216,7 +1136,8 @@ const TASK_STATUS_LABELS = { todo:'待办', doing:'进行中', review:'待验证
 const TASK_COLS = ['todo','doing','review','done'];
 const TASK_TYPE_LABELS = { feature:'功能开发', bug:'Bug修复', doc:'文档编写', test:'功能测试', perf:'性能优化', comm:'沟通协调', other:'其他' };
 const TASK_TYPE_COLORS = { feature:'#dbeafe:#1e40af', bug:'#fee2e2:#9b1c1c', doc:'#e8f5ee:#2d6a4f', test:'#fef3c7:#92400e', perf:'#ede9fe:#5b21b6', comm:'#e0f2fe:#0369a1', other:'#f1f5f9:#475569' };
-const ROLE_LABELS = { product_design:'产品设计', frontend:'前端', backend:'后端', testing:'测试' };
+const BUILTIN_ROLES = { product_design:'产品设计', frontend:'前端', backend:'后端', testing:'测试' };
+let ROLE_LABELS = { ...BUILTIN_ROLES };
 const SUB_STATUS_LABELS = { pending_design:'待产品设计', pending_dev:'待开发', developing:'开发中', integration:'联调中', testing:'测试中', done:'已完成' };
 
 // ======== IDB HELPERS ========
@@ -1846,7 +1767,7 @@ function renderDetail(projectId) {
         <span class="badge badge-priority-${proj.priority}">${PRIORITY_LABELS[proj.priority]}</span>
         ${(proj.tags||[]).map(t=>`<span class="badge badge-status-planning">${escHtml(t)}</span>`).join('')}
       </div>
-      ${proj.description ? `<div class="detail-hero-desc">${escHtml(proj.description)}</div>` : ''}
+      ${proj.description ? `<div class="detail-hero-desc">${linkifyUrls(proj.description)}</div>` : ''}
       <div class="detail-meta-grid">
         <div class="detail-meta-item"><div class="detail-meta-label">负责人</div><div class="detail-meta-value">${escHtml(proj.owner||'—')}</div></div>
         <div class="detail-meta-item"><div class="detail-meta-label">开始日期</div><div class="detail-meta-value">${proj.startDate||'—'}</div></div>
@@ -1863,6 +1784,7 @@ function renderDetail(projectId) {
       <div class="tab ${currentDetailTab==='risks'?'active':''}" onclick="switchDetailTab('risks')">风险 (${allRisks.length}${highRiskCount?' · <span style=color:var(--red)>'+highRiskCount+' 高风险</span>':''})</div>
       <div class="tab ${currentDetailTab==='tasks'?'active':''}" onclick="switchDetailTab('tasks')">任务 (${allTasks.length})</div>
       <div class="tab ${currentDetailTab==='envconfigs'?'active':''}" onclick="switchDetailTab('envconfigs')">环境配置 (${(proj.envConfigs||[]).length})</div>
+      <div class="tab ${currentDetailTab==='configfiles'?'active':''}" onclick="switchDetailTab('configfiles')">配置文件</div>
     </div>
     <div id="detail-tab-content"></div>
   `;
@@ -1881,6 +1803,7 @@ function renderDetailTab(projectId) {
   else if (currentDetailTab === 'risks') el.innerHTML = renderRisksTab(proj);
   else if (currentDetailTab === 'tasks') el.innerHTML = renderTasksTab(proj);
   else if (currentDetailTab === 'envconfigs') el.innerHTML = renderEnvConfigsTab(proj);
+  else if (currentDetailTab === 'configfiles') { renderConfigFilesTab(proj, el); return; }
 }
 
 // ======== SUBPROJECTS TAB ========
@@ -2161,7 +2084,7 @@ async function openTaskDetail(projectId, taskId) {
     <div class="td-meta-item"><div class="td-meta-label">负责人</div><div class="td-meta-value">${escHtml(assigneeNames.join('、')||'—')}</div></div>
     <div class="td-meta-item"><div class="td-meta-label">所属</div><div class="td-meta-value">${escHtml(spName ? proj.name+' / '+spName : proj.name)}</div></div>`;
   document.getElementById('td-desc-section').innerHTML = task.description
-    ? `<div class="td-section-label">描述</div><div class="td-description">${escHtml(task.description)}</div>` : '';
+    ? `<div class="td-section-label">描述</div><div class="td-description">${linkifyUrls(task.description)}</div>` : '';
   document.getElementById('td-images-section').innerHTML = '';
   // Repeat info
   let repeatHtml = '';
@@ -2177,7 +2100,7 @@ async function openTaskDetail(projectId, taskId) {
   }
   document.getElementById('td-comment-section').innerHTML =
     repeatHtml +
-    (task.comment ? `<div class="td-section-label">解决步骤 / 评论</div><div class="td-comment">${escHtml(task.comment)}</div>` : '');
+    (task.comment ? `<div class="td-section-label">解决步骤 / 评论</div><div class="td-comment">${linkifyUrls(task.comment)}</div>` : '');
   openModal('task-detail-modal');
   // Async load images
   if (task.imageCount > 0) {
@@ -2785,17 +2708,19 @@ function openPersonModal(personId) {
   const person = personId ? people.find(p => p.id === personId) : null;
   document.getElementById('people-modal-title').textContent = person ? '编辑人员' : '新建人员';
   document.getElementById('pf-name').value = person?.name || '';
-  const roleKeys = ['product_design','frontend','backend','testing'];
-  roleKeys.forEach(role => {
-    const cb = document.getElementById(`pf-role-${role}`);
-    if (cb) cb.checked = person ? (person.roles || []).includes(role) : false;
-  });
+  // Dynamically render role checkboxes
+  const rolesContainer = document.getElementById('pf-roles-container');
+  rolesContainer.innerHTML = Object.entries(ROLE_LABELS).map(([key, label]) =>
+    `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+      <input type="checkbox" id="pf-role-${key}" style="accent-color:var(--accent2)" ${person && (person.roles||[]).includes(key)?'checked':''}> ${escHtml(label)}
+    </label>`
+  ).join('');
   openModal('people-modal');
 }
 async function savePersonForm() {
   const name = document.getElementById('pf-name').value.trim();
   if (!name) { showToast('请填写姓名', 'error'); return; }
-  const roleKeys = ['product_design','frontend','backend','testing'];
+  const roleKeys = Object.keys(ROLE_LABELS);
   const roles = roleKeys.filter(r => document.getElementById(`pf-role-${r}`)?.checked);
   if (editingPersonId) {
     const idx = people.findIndex(p => p.id === editingPersonId);
@@ -2893,12 +2818,31 @@ function openSubProjectForm(projectId, subProjectId) {
   document.getElementById('sf-priority').value = sp?.priority || 'medium';
   document.getElementById('sf-start').value = sp?.startDate || '';
   document.getElementById('sf-due').value = sp?.dueDate || '';
+  // Dynamically render role sections
+  const rolesContainer = document.getElementById('sf-roles-container');
+  const roleKeys = Object.keys(ROLE_LABELS);
+  rolesContainer.innerHTML = roleKeys.map(role => `
+    <div class="role-section">
+      <div class="role-section-header">${escHtml(ROLE_LABELS[role])}</div>
+      <div class="role-section-body">
+        <div class="ms-wrap" id="sf-role-${role}-ms">
+          <div class="ms-trigger" onclick="toggleMs('sf-role-${role}-ms')">
+            <div class="ms-tags" id="sf-role-${role}-ms-tags"><span class="ms-placeholder">选择${escHtml(ROLE_LABELS[role])}人员</span></div>
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="ms-dropdown" id="sf-role-${role}-ms-dropdown"></div>
+        </div>
+        <div class="role-progress-wrap" style="margin-top:8px">
+          <input type="range" min="0" max="100" step="5" id="sf-prog-${role}" value="0" oninput="document.getElementById('sf-prog-${role}-val').textContent=this.value+'%'">
+          <span id="sf-prog-${role}-val">0%</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
   // Initialize role multi-selects and progress
-  const roleKeys = ['product_design','frontend','backend','testing'];
-  const placeholders = { product_design:'选择产品设计人员', frontend:'选择前端人员', backend:'选择后端人员', testing:'选择测试人员' };
   roleKeys.forEach(role => {
     const selected = sp?.owners ? (sp.owners[role] || []) : [];
-    initMs(`sf-role-${role}-ms`, people.map(p=>({id:p.id,name:p.name})), selected, placeholders[role]);
+    initMs(`sf-role-${role}-ms`, people.map(p=>({id:p.id,name:p.name})), selected, `选择${ROLE_LABELS[role]}人员`);
     const pct = sp?.roleProgress ? (sp.roleProgress[role] || 0) : 0;
     const rangeEl = document.getElementById(`sf-prog-${role}`);
     const valEl = document.getElementById(`sf-prog-${role}-val`);
@@ -2913,14 +2857,14 @@ async function saveSubProjectForm() {
   const proj = getProject(subProjectFormProjectId);
   if (!proj) return;
   if (!proj.subProjects) proj.subProjects = [];
-  const roleKeys = ['product_design','frontend','backend','testing'];
+  const roleKeys = Object.keys(ROLE_LABELS);
   const owners = {};
   const roleProgress = {};
   roleKeys.forEach(role => {
     owners[role] = getMsValues(`sf-role-${role}-ms`);
     roleProgress[role] = parseInt(document.getElementById(`sf-prog-${role}`)?.value) || 0;
   });
-  const avgProgress = Math.round(Object.values(roleProgress).reduce((a,b)=>a+b,0)/roleKeys.length);
+  const avgProgress = roleKeys.length ? Math.round(Object.values(roleProgress).reduce((a,b)=>a+b,0)/roleKeys.length) : 0;
   if (editingSubProjectId) {
     const idx = proj.subProjects.findIndex(s=>s.id===editingSubProjectId);
     if (idx >= 0) {
@@ -3253,6 +3197,161 @@ function escHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function linkifyUrls(text) {
+  if (!text) return '';
+  const escaped = escHtml(text);
+  return escaped.replace(/(https?:\/\/[^\s<>&"']+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:underline;word-break:break-all;" onclick="event.stopPropagation()">$1</a>');
+}
+
+// ======== PROJECT CONFIG FILES ========
+let projectConfigFiles = [];
+let viewingConfigFile = null;
+
+const CONFIG_EXT_ICONS = {
+  json: '{ }', xml: '&lt;/&gt;', yaml: 'YML', yml: 'YML',
+  properties: 'PROP', md: 'MD', txt: 'TXT'
+};
+const CONFIG_EXT_COLORS = {
+  json: '#f59e0b', xml: '#ef4444', yaml: '#8b5cf6', yml: '#8b5cf6',
+  properties: '#059669', md: '#3b82f6', txt: '#6b7280'
+};
+
+async function renderConfigFilesTab(proj, el) {
+  if (!ELECTRON_AVAILABLE) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">仅桌面版支持配置文件管理</div>';
+    return;
+  }
+  projectConfigFiles = await window.electronAPI.readProjectConfigFiles(proj.id);
+
+  if (viewingConfigFile) {
+    const cf = projectConfigFiles.find(c => c.id === viewingConfigFile);
+    if (cf) { renderConfigFileDetail(cf, proj, el); return; }
+    viewingConfigFile = null;
+  }
+
+  let html = `<div class="section-actions" style="margin-bottom:16px">
+    <div class="section-title">配置文件 (${projectConfigFiles.length})</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" onclick="uploadConfigFile('${proj.id}')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        上传文件
+      </button>
+      <button class="btn btn-sm btn-primary" onclick="addConfigFile('${proj.id}')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        新建配置
+      </button>
+    </div>
+  </div>`;
+
+  if (!projectConfigFiles.length) {
+    html += '<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px">暂无配置文件，点击"新建配置"或"上传文件"添加</div>';
+  } else {
+    html += '<div class="env-config-list">';
+    for (const cf of projectConfigFiles) {
+      const ext = cf.ext || 'txt';
+      const color = CONFIG_EXT_COLORS[ext] || '#6b7280';
+      const icon = CONFIG_EXT_ICONS[ext] || ext.toUpperCase();
+      html += `<div class="env-config-card" onclick="viewConfigFile('${cf.id}')">
+        <div class="env-config-card-header">
+          <div class="env-config-card-name" style="display:flex;align-items:center;gap:8px">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:${color}15;color:${color};font-size:10px;font-weight:700;flex-shrink:0">${icon}</span>
+            ${escHtml(cf.fileName)}
+          </div>
+          <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
+            <button class="icon-btn" onclick="downloadConfigFile('${cf.id}')" title="下载">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </button>
+            <button class="icon-btn delete" onclick="deleteConfigFile('${proj.id}','${cf.id}')" title="删除">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">
+          ${cf.ext?.toUpperCase()} 文件 · ${new Date(cf.createdAt).toLocaleDateString('zh-CN')}
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function renderConfigFileDetail(cf, proj, el) {
+  const ext = cf.ext || 'txt';
+  let rendered = '';
+  if (ext === 'json') {
+    try { rendered = `<pre style="background:var(--surface2);padding:16px;border-radius:var(--radius-sm);overflow-x:auto;font-size:12px;line-height:1.6;font-family:Consolas,Monaco,monospace;color:var(--text)">${escHtml(JSON.stringify(JSON.parse(cf.content), null, 2))}</pre>`; }
+    catch { rendered = `<pre style="background:var(--surface2);padding:16px;border-radius:var(--radius-sm);overflow-x:auto;font-size:12px;line-height:1.6">${escHtml(cf.content)}</pre>`; }
+  } else if (ext === 'md') {
+    rendered = `<div style="background:var(--surface2);padding:16px;border-radius:var(--radius-sm);font-size:13px;line-height:1.8;white-space:pre-wrap">${linkifyUrls(cf.content)}</div>`;
+  } else {
+    rendered = `<pre style="background:var(--surface2);padding:16px;border-radius:var(--radius-sm);overflow-x:auto;font-size:12px;line-height:1.6;font-family:Consolas,Monaco,monospace;color:var(--text)">${escHtml(cf.content)}</pre>`;
+  }
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button class="btn btn-sm" onclick="viewingConfigFile=null;renderDetail('${proj.id}')">← 返回列表</button>
+      <span style="font-size:15px;font-weight:500">${escHtml(cf.fileName)}</span>
+      <button class="btn btn-sm" onclick="downloadConfigFile('${cf.id}')" style="margin-left:auto">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        下载
+      </button>
+    </div>
+    ${rendered}
+  `;
+}
+
+function viewConfigFile(cfId) {
+  viewingConfigFile = cfId;
+  if (currentProjectId) renderDetail(currentProjectId);
+}
+
+async function addConfigFile(projectId) {
+  const fileName = prompt('输入配置文件名（如 config.json、app.yaml）：');
+  if (!fileName) return;
+  const ext = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : 'txt';
+  const config = {
+    id: genId(), fileName, ext, content: '',
+    createdAt: new Date().toISOString()
+  };
+  // Open a simple editing prompt
+  const content = prompt(`输入 ${fileName} 的内容：`, '');
+  if (content === null) return;
+  config.content = content;
+  await window.electronAPI.saveProjectConfigFile(projectId, config);
+  showToast('配置文件已添加', 'success');
+  renderDetail(projectId);
+}
+
+async function uploadConfigFile(projectId) {
+  const result = await window.electronAPI.uploadProjectConfigFile(projectId);
+  if (!result) return;
+  const config = {
+    id: genId(), fileName: result.fileName, ext: result.ext,
+    content: result.content, createdAt: new Date().toISOString()
+  };
+  await window.electronAPI.saveProjectConfigFile(projectId, config);
+  showToast(`文件「${result.fileName}」已上传`, 'success');
+  renderDetail(projectId);
+}
+
+async function downloadConfigFile(cfId) {
+  const cf = projectConfigFiles.find(c => c.id === cfId);
+  if (!cf) return;
+  await window.electronAPI.downloadConfigFile(cf.fileName, cf.content);
+}
+
+async function deleteConfigFile(projectId, cfId) {
+  const cf = projectConfigFiles.find(c => c.id === cfId);
+  document.getElementById('confirm-title').textContent = '确认删除配置文件';
+  document.getElementById('confirm-msg').textContent = `确定删除「${cf?.fileName || ''}」吗？`;
+  pendingConfirmFn = async () => {
+    await window.electronAPI.deleteProjectConfigFile(projectId, cfId);
+    showToast('配置文件已删除', 'success');
+    viewingConfigFile = null;
+    renderDetail(projectId);
+  };
+  openModal('confirm-modal');
+}
 
 // ======== INIT ========
 async function init() {
@@ -3279,6 +3378,15 @@ async function init() {
         document.getElementById('folder-banner').style.display = 'flex';
       }
     }
+  }
+  // Load custom roles
+  if (ELECTRON_AVAILABLE) {
+    try {
+      const settings = await window.electronAPI.getSettings();
+      const customRoles = settings.customRoles || [];
+      ROLE_LABELS = { ...BUILTIN_ROLES };
+      for (const r of customRoles) ROLE_LABELS[r.key] = r.name;
+    } catch {}
   }
   await loadFromFS();
   await loadPeopleFromFS();

@@ -297,12 +297,7 @@ textarea.form-input { resize: vertical; min-height: 80px; line-height: 1.7; }
       </div>
       <div class="form-group">
         <label class="form-label">角色</label>
-        <div class="role-checkbox-group" id="pf-roles">
-          <label class="role-cb-label"><input type="checkbox" value="product_design"><span>产品设计</span></label>
-          <label class="role-cb-label"><input type="checkbox" value="frontend"><span>前端</span></label>
-          <label class="role-cb-label"><input type="checkbox" value="backend"><span>后端</span></label>
-          <label class="role-cb-label"><input type="checkbox" value="testing"><span>测试</span></label>
-        </div>
+        <div class="role-checkbox-group" id="pf-roles"></div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -342,7 +337,8 @@ textarea.form-input { resize: vertical; min-height: 80px; line-height: 1.7; }
 
 <script>
 // ======== CONSTANTS ========
-const ROLE_LABELS = { product_design: '产品设计', frontend: '前端', backend: '后端', testing: '测试' };
+const BUILTIN_ROLES = { product_design: '产品设计', frontend: '前端', backend: '后端', testing: '测试' };
+let ROLE_LABELS = { ...BUILTIN_ROLES };
 const AVATAR_COLORS = ['#4F46E5','#0891B2','#059669','#D97706','#DC2626','#7C3AED','#2563EB','#0D9488','#EA580C','#BE185D'];
 
 // ======== STATE ========
@@ -357,6 +353,11 @@ let currentDetailId = null;
 // ======== UTILS ========
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function linkifyUrls(text) {
+  if (!text) return '';
+  const escaped = escHtml(text);
+  return escaped.replace(/(https?:\/\/[^\s<>&"']+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:underline;word-break:break-all;" onclick="event.stopPropagation()">$1</a>');
+}
 
 function getAvatarColor(name) {
   let hash = 0;
@@ -660,7 +661,7 @@ function renderDetailView(c) {
         </div>
       </div>
 
-      ${p.notes ? `<div style="margin-bottom:28px;"><div class="section-title">备注</div><div class="profile-notes">${escHtml(p.notes)}</div></div>` : ''}
+      ${p.notes ? `<div style="margin-bottom:28px;"><div class="section-title">备注</div><div class="profile-notes">${linkifyUrls(p.notes)}</div></div>` : ''}
 
       <div style="margin-bottom:28px;">
         <div class="section-title">负责的项目 (${ownedProjects.length})</div>
@@ -698,6 +699,13 @@ function renderDetailView(c) {
 }
 
 // ======== MODAL ========
+function renderRoleCheckboxes(selectedRoles = []) {
+  const container = document.getElementById('pf-roles');
+  container.innerHTML = Object.entries(ROLE_LABELS).map(([key, label]) =>
+    `<label class="role-cb-label"><input type="checkbox" value="${key}" ${selectedRoles.includes(key)?'checked':''}><span>${escHtml(label)}</span></label>`
+  ).join('');
+}
+
 function openPersonModal(personId) {
   editingPersonId = personId;
   const p = personId ? people.find(x => x.id === personId) : null;
@@ -709,10 +717,8 @@ function openPersonModal(personId) {
   document.getElementById('pf-email').value = p?.email || '';
   document.getElementById('pf-notes').value = p?.notes || '';
 
-  // Roles
-  document.querySelectorAll('#pf-roles input').forEach(cb => {
-    cb.checked = p ? (p.roles || []).includes(cb.value) : false;
-  });
+  // Roles - dynamically render
+  renderRoleCheckboxes(p ? (p.roles || []) : []);
 
   // Status
   setStatus(p?.status || 'active');
@@ -792,10 +798,23 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ======== LOAD CUSTOM ROLES ========
+async function loadCustomRoles() {
+  if (window.electronAPI?.getSettings) {
+    const settings = await window.electronAPI.getSettings();
+    const customRoles = settings.customRoles || [];
+    ROLE_LABELS = { ...BUILTIN_ROLES };
+    for (const r of customRoles) {
+      ROLE_LABELS[r.key] = r.name;
+    }
+  }
+}
+
 // ======== INIT ========
 async function init() {
   const t = localStorage.getItem('theme');
   if (t) document.documentElement.setAttribute('data-theme', t);
+  await loadCustomRoles();
   await loadPeople();
   await loadProjects();
   showView('list');

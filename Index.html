@@ -1117,6 +1117,11 @@ function escHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function linkifyUrls(text) {
+  if (!text) return '';
+  const escaped = escHtml(text);
+  return escaped.replace(/(https?:\/\/[^\s<>&"']+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:underline;word-break:break-all;" onclick="event.stopPropagation()">$1</a>');
+}
 
 // ======== PEOPLE LOADING ========
 async function loadPeopleFromFS() {
@@ -1464,7 +1469,7 @@ function infoTable(r) {
   </table>`;
 }
 function dimTable(rows) {
-  return `<table class="detail-table">${rows.map(([l,v])=>`<tr><td>${l}</td><td>${v||'（未填写）'}</td></tr>`).join('')}</table>`;
+  return `<table class="detail-table">${rows.map(([l,v])=>`<tr><td>${l}</td><td>${linkifyUrls(v)||'（未填写）'}</td></tr>`).join('')}</table>`;
 }
 function actionTableHTML(items) {
   if (!items.length) return `<div style="padding:20px;color:var(--text3);font-size:13px">（未填写行动计划）</div>`;
@@ -1484,12 +1489,12 @@ function summaryHTML(r) {
     ? goals.map((g, i) => `<tr><td>下周目标${i+1}</td><td>${g}</td></tr>`).join('')
     : `<tr><td>下周目标</td><td>（未填写）</td></tr>`;
   return `<table class="detail-table">
-    <tr><td>经验沉淀</td><td>${r.summary_exp||'（未填写）'}</td></tr>
-    <tr><td>需规避问题</td><td>${r.summary_avoid||'（未填写）'}</td></tr>
-    <tr><td>可复用方法</td><td>${r.summary_reuse||'（未填写）'}</td></tr>
+    <tr><td>经验沉淀</td><td>${linkifyUrls(r.summary_exp)||'（未填写）'}</td></tr>
+    <tr><td>需规避问题</td><td>${linkifyUrls(r.summary_avoid)||'（未填写）'}</td></tr>
+    <tr><td>可复用方法</td><td>${linkifyUrls(r.summary_reuse)||'（未填写）'}</td></tr>
     ${goalRows}
-    <tr><td>需停止的行为</td><td>${r.stop_behavior||'—'}</td></tr>
-    <tr><td>备注</td><td>${r.notes||'—'}</td></tr>
+    <tr><td>需停止的行为</td><td>${linkifyUrls(r.stop_behavior)||'—'}</td></tr>
+    <tr><td>备注</td><td>${linkifyUrls(r.notes)||'—'}</td></tr>
   </table>`;
 }
 
