@@ -734,7 +734,10 @@ body {
 .ms-wrap { position: relative; user-select: none; }
 .ms-trigger { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; font-size: 13px; min-height: 36px; }
 .ms-trigger:focus-within { border-color: var(--accent2); }
-.ms-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); z-index: 200; max-height: 200px; overflow-y: auto; box-shadow: var(--shadow2); display: none; }
+.ms-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); z-index: 200; max-height: 240px; overflow-y: auto; box-shadow: var(--shadow2); display: none; }
+.ms-search { width: 100%; padding: 8px 12px; border: none; border-bottom: 1px solid var(--border2); font-size: 13px; background: var(--surface); color: var(--text1); outline: none; box-sizing: border-box; }
+.ms-search::placeholder { color: var(--text3); }
+.ms-option.hidden { display: none; }
 .ms-wrap.open .ms-dropdown { display: block; }
 .ms-option { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
 .ms-option:hover { background: var(--surface2); }
@@ -1144,11 +1147,21 @@ function initMs(wrapperId, options, selectedVals, placeholder) {
   if (!wrap) return;
   const dropdown = document.getElementById(wrapperId + '-dropdown');
   if (!dropdown) return;
-  dropdown.innerHTML = options.map(opt => `
-    <label class="ms-option">
+  const searchId = wrapperId + '-search';
+  dropdown.innerHTML = `<input class="ms-search" id="${searchId}" placeholder="搜索..." onclick="event.stopPropagation()">` +
+    options.map(opt => `
+    <label class="ms-option" data-name="${escHtml(opt.toLowerCase())}">
       <input type="checkbox" value="${escHtml(opt)}" ${selectedVals.includes(opt)?'checked':''} onchange="updateMsTags('${wrapperId}','${escHtml(placeholder||'请选择')}')">
       ${escHtml(opt)}
     </label>`).join('');
+  const searchInput = document.getElementById(searchId);
+  searchInput.addEventListener('input', function() {
+    const kw = this.value.toLowerCase().trim();
+    dropdown.querySelectorAll('.ms-option').forEach(opt => {
+      const name = opt.getAttribute('data-name') || '';
+      opt.classList.toggle('hidden', kw !== '' && !name.includes(kw));
+    });
+  });
   updateMsTags(wrapperId, placeholder || '请选择');
 }
 function updateMsTags(wrapperId, placeholder) {
@@ -1523,7 +1536,13 @@ function buildForm() {
           </div>
           <div class="form-group full">
             <label class="form-label">参与复盘人员（团队复盘填写）</label>
-            <input class="form-input" id="f-participants" placeholder="多人用逗号分隔" value="${d.participants||''}">
+            <div class="ms-wrap" id="f-participants-ms">
+              <div class="ms-trigger" onclick="toggleMs('f-participants-ms')">
+                <div class="ms-tags" id="f-participants-ms-tags"><span class="ms-placeholder">选择参与人员</span></div>
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+              <div class="ms-dropdown" id="f-participants-ms-dropdown"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1655,6 +1674,9 @@ function buildForm() {
   const reviewerNames = people.map(p => p.name);
   const selectedReviewer = d.reviewer ? d.reviewer.split(',').map(s=>s.trim()).filter(Boolean) : [];
   initMs('f-reviewer-ms', reviewerNames, selectedReviewer, '选择复盘人');
+  // Initialize participants multi-select
+  const selectedParticipants = d.participants ? d.participants.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  initMs('f-participants-ms', reviewerNames, selectedParticipants, '选择参与人员');
 }
 
 function dimFormRow(field, label, placeholder, d) {
@@ -1803,7 +1825,7 @@ const FORM_FIELDS = [
 
 function collectCurrentStep() {
   FORM_FIELDS.forEach(f => {
-    if (f === 'reviewer') {
+    if (f === 'reviewer' || f === 'participants') {
       // handled separately via multi-select
       return;
     }
@@ -1815,6 +1837,12 @@ function collectCurrentStep() {
   if (reviewerWrap) {
     const vals = getMsValues('f-reviewer-ms');
     formData.reviewer = vals.join(', ');
+  }
+  // Collect participants from multi-select
+  const participantsWrap = document.getElementById('f-participants-ms');
+  if (participantsWrap) {
+    const vals = getMsValues('f-participants-ms');
+    formData.participants = vals.join(', ');
   }
   collectGoals();
   if (!formData.actionItems) formData.actionItems = [];
@@ -1851,11 +1879,47 @@ async function saveForm() {
       await saveRecord(rec);
       showToast('复盘已保存', 'success');
     }
+    // Auto-create calendar events from improvement actions
+    await createCalendarEventsFromActions(formData);
     formData = {}; editingId = null;
     setTimeout(() => showView('list'), 800);
   } catch (e) {
     showToast('保存失败：' + e.message, 'error');
   }
+}
+
+async function createCalendarEventsFromActions(data) {
+  if (!ELECTRON_AVAILABLE || !window.electronAPI || !window.electronAPI.saveEvent) return;
+  const actionFields = ['dim1_action', 'dim2_action', 'dim3_action', 'dim4_action'];
+  const actions = actionFields.map(f => (data[f] || '').trim()).filter(Boolean);
+  if (!actions.length) return;
+  // Calculate next week Monday and Sunday
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
+  const nextMonday = new Date(today);
+  nextMonday.setDate(today.getDate() + daysUntilMonday);
+  const nextSunday = new Date(nextMonday);
+  nextSunday.setDate(nextMonday.getDate() + 6);
+  const fmtDate = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const startDate = fmtDate(nextMonday);
+  const endDate = fmtDate(nextSunday);
+  let created = 0;
+  for (const text of actions) {
+    const ev = {
+      id: Date.now().toString() + '_' + (created++),
+      title: '【改进】' + text.split('\n')[0].substring(0, 50),
+      startDate, startTime: '', endDate, endTime: '',
+      allDay: true,
+      category: '工作',
+      reminder: 0,
+      description: text,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    try { await window.electronAPI.saveEvent(ev); } catch {}
+  }
+  if (created > 0) showToast(`已自动创建 ${created} 条日历待办`, 'success');
 }
 
 // ======== STATS ========
