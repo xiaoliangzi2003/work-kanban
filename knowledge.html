@@ -247,6 +247,11 @@ body {
             <button class="btn btn-sm" onclick="cancelEdit()">← 返回</button>
             <input type="text" id="edit-title" placeholder="输入文档标题...">
             <select class="filter-select" id="edit-project" style="min-width:140px"></select>
+            <button class="btn btn-sm" onclick="insertImage()" title="插入图片">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              插入图片
+            </button>
+            <input type="file" id="image-file-input" accept="image/*" style="display:none" onchange="handleImageFile(this)">
             <button class="btn btn-sm btn-primary" onclick="saveKB()">
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               保存
@@ -595,14 +600,14 @@ function renderMarkdown(md) {
   // Strikethrough
   html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
+  // Images (must be before links)
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:8px 0">');
+
   // Links
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
   // Auto-link URLs
   html = html.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
-
-  // Images
-  html = html.replace(/!&lt;img&gt;\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
 
   // Tables
   html = html.replace(/^(\|.+\|)\n(\|[-| :]+\|)\n((?:\|.+\|\n?)*)/gm, (_, header, sep, body) => {
@@ -635,6 +640,39 @@ function renderMarkdown(md) {
   return html;
 }
 
+// ======== IMAGE UPLOAD ========
+function insertImage() {
+  document.getElementById('image-file-input').click();
+}
+
+function handleImageFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('请选择图片文件', 'error');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('图片大小不能超过 5MB', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    const textarea = document.getElementById('edit-content');
+    const pos = textarea.selectionStart;
+    const before = textarea.value.substring(0, pos);
+    const after = textarea.value.substring(textarea.selectionEnd);
+    const imgMd = `![${file.name}](${dataUrl})`;
+    textarea.value = before + imgMd + after;
+    textarea.selectionStart = textarea.selectionEnd = pos + imgMd.length;
+    textarea.focus();
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
 // ======== KEYBOARD ========
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
@@ -663,6 +701,48 @@ async function init() {
   await loadAllKB();
   renderSidebar();
   renderList();
+
+  // Support drag-and-drop images into editor
+  const textarea = document.getElementById('edit-content');
+  textarea.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+  textarea.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer.files;
+    if (files.length && files[0].type.startsWith('image/')) {
+      const input = document.getElementById('image-file-input');
+      const dt = new DataTransfer();
+      dt.items.add(files[0]);
+      input.files = dt.files;
+      handleImageFile(input);
+    }
+  });
+
+  // Support paste images into editor
+  textarea.addEventListener('paste', e => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const dataUrl = ev.target.result;
+          const pos = textarea.selectionStart;
+          const before = textarea.value.substring(0, pos);
+          const after = textarea.value.substring(textarea.selectionEnd);
+          const imgMd = `![粘贴图片](${dataUrl})`;
+          textarea.value = before + imgMd + after;
+          textarea.selectionStart = textarea.selectionEnd = pos + imgMd.length;
+          updatePreview();
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+    }
+  });
 }
 init();
 </script>
