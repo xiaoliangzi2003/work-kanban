@@ -405,6 +405,28 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
 .env-custom-fields { margin-top: 10px; }
 .env-custom-field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
 .env-custom-field-row input { flex: 1; }
+/* Env category cards */
+.env-category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.env-category-card { background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius); padding: 24px 20px; cursor: pointer; transition: var(--transition); text-align: center; }
+.env-category-card:hover { box-shadow: var(--shadow2); transform: translateY(-2px); }
+.env-category-card.active { border-color: var(--accent2); }
+.env-category-card-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px; }
+.env-category-card-icon.dev { background: #dbeafe; color: #1e40af; }
+.env-category-card-icon.test { background: var(--amber-bg); color: var(--amber); }
+.env-category-card-icon.prod { background: var(--red-bg); color: var(--red); }
+[data-theme="dark"] .env-category-card-icon.dev { background: #1e3a8a; color: #93c5fd; }
+.env-category-card-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.env-category-card-count { font-size: 12px; color: var(--text3); }
+/* Env filter tabs */
+.env-filter-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.env-filter-tab { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; transition: var(--transition); }
+.env-filter-tab:hover { background: var(--surface2); }
+.env-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* Template selector */
+.template-selector { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; padding: 10px 14px; background: var(--surface2); border-radius: var(--radius-sm); }
+.template-selector label { font-size: 12px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+.template-selector select { flex: 1; padding: 5px 10px; border: 1px solid var(--border2); border-radius: 6px; font-size: 12px; font-family: inherit; background: var(--surface); color: var(--text); }
+.template-selector .btn { padding: 4px 10px; font-size: 11px; }
 .env-custom-field-row .remove-field-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
 .env-custom-field-row .remove-field-btn:hover { background: var(--red-bg); color: var(--red); border-color: var(--red); }
 
@@ -1049,6 +1071,7 @@ textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.6; }
   <div class="modal modal-lg">
     <h3 id="envconfig-modal-title">新建环境配置</h3>
     <div class="modal-sub">填写环境配置信息，不需要的字段可留空</div>
+    <div id="ec-template-selector" style="display:none"></div>
     <div class="form-row form-row-2">
       <div class="form-group">
         <label class="form-label">配置名称 <span class="required">*</span></label>
@@ -1124,6 +1147,8 @@ let envConfigSubProjectId = null; // null for project-level, spId for sub-projec
 let editingEnvConfigId = null;
 let envConfigCustomFieldCount = 0;
 let viewingEnvConfigId = null;
+let envConfigFilterEnv = null; // null = all, 'dev'|'test'|'prod'
+let envConfigTemplates = []; // loaded from settings
 
 const FSA_AVAILABLE = ('showDirectoryPicker' in window);
 const ELECTRON_AVAILABLE = (typeof window.electronAPI !== 'undefined');
@@ -2189,16 +2214,58 @@ function showEnvConfigList(projectId, subProjectId) {
 function renderEnvConfigList() {
   const proj = getProject(envConfigProjectId);
   if (!proj) { document.getElementById('envconfig-content').innerHTML = '<p>项目不存在</p>'; return; }
-  let configs;
+  let allConfigs;
   let entityName;
   if (envConfigSubProjectId) {
     const sp = (proj.subProjects||[]).find(s=>s.id===envConfigSubProjectId);
-    configs = sp?.envConfigs || [];
+    allConfigs = sp?.envConfigs || [];
     entityName = sp?.name || '子项目';
   } else {
-    configs = proj.envConfigs || [];
+    allConfigs = proj.envConfigs || [];
     entityName = proj.name;
   }
+
+  // Category counts
+  const devCount = allConfigs.filter(c => c.env === 'dev').length;
+  const testCount = allConfigs.filter(c => c.env === 'test').length;
+  const prodCount = allConfigs.filter(c => c.env === 'prod').length;
+
+  // Category cards
+  const categoryHtml = `<div class="env-category-grid">
+    <div class="env-category-card ${envConfigFilterEnv==='dev'?'active':''}" onclick="setEnvFilter(envConfigFilterEnv==='dev'?null:'dev')">
+      <div class="env-category-card-icon dev">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+      </div>
+      <div class="env-category-card-title">开发环境</div>
+      <div class="env-category-card-count">${devCount} 项配置</div>
+    </div>
+    <div class="env-category-card ${envConfigFilterEnv==='test'?'active':''}" onclick="setEnvFilter(envConfigFilterEnv==='test'?null:'test')">
+      <div class="env-category-card-icon test">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+      <div class="env-category-card-title">测试环境</div>
+      <div class="env-category-card-count">${testCount} 项配置</div>
+    </div>
+    <div class="env-category-card ${envConfigFilterEnv==='prod'?'active':''}" onclick="setEnvFilter(envConfigFilterEnv==='prod'?null:'prod')">
+      <div class="env-category-card-icon prod">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+      </div>
+      <div class="env-category-card-title">生产环境</div>
+      <div class="env-category-card-count">${prodCount} 项配置</div>
+    </div>
+  </div>`;
+
+  // Filter configs
+  const configs = envConfigFilterEnv ? allConfigs.filter(c => c.env === envConfigFilterEnv) : allConfigs;
+
+  // Filter tabs
+  const filterTabsHtml = `<div class="env-filter-tabs">
+    <button class="env-filter-tab ${!envConfigFilterEnv?'active':''}" onclick="setEnvFilter(null)">全部 (${allConfigs.length})</button>
+    <button class="env-filter-tab ${envConfigFilterEnv==='dev'?'active':''}" onclick="setEnvFilter('dev')">开发 (${devCount})</button>
+    <button class="env-filter-tab ${envConfigFilterEnv==='test'?'active':''}" onclick="setEnvFilter('test')">测试 (${testCount})</button>
+    <button class="env-filter-tab ${envConfigFilterEnv==='prod'?'active':''}" onclick="setEnvFilter('prod')">生产 (${prodCount})</button>
+  </div>`;
+
   const listHtml = configs.length ? configs.map(cfg => {
     const filledFields = cfg.fields.filter(f => f.value).length;
     return `<div class="env-config-card" onclick="showEnvConfigDetail('${cfg.id}')">
@@ -2221,16 +2288,18 @@ function renderEnvConfigList() {
         </button>
       </div>
     </div>`;
-  }).join('') : '<div class="dash-empty" style="padding:40px 0">暂无环境配置</div>';
+  }).join('') : `<div class="dash-empty" style="padding:40px 0">暂无${envConfigFilterEnv ? ENV_LABELS[envConfigFilterEnv] : ''}环境配置</div>`;
 
   document.getElementById('envconfig-content').innerHTML = `
     <div class="section-actions" style="margin-bottom:16px">
-      <div class="section-title">${escHtml(entityName)} - 环境配置（${configs.length} 项）</div>
+      <div class="section-title">${escHtml(entityName)} - 环境配置（${allConfigs.length} 项）</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-sm btn-primary" onclick="openEnvConfigForm(null)">+ 新建配置</button>
         <button class="btn btn-sm" onclick="showDetail('${envConfigProjectId}')">返回项目</button>
       </div>
     </div>
+    ${categoryHtml}
+    ${filterTabsHtml}
     <div class="env-config-list">${listHtml}</div>`;
 }
 
@@ -2276,6 +2345,10 @@ function renderEnvConfigDetail() {
         <div class="detail-hero-title">${escHtml(cfg.name)}</div>
         <div style="display:flex;gap:8px">
           <span class="env-badge ${ENV_BADGE_CLASS[cfg.env]||''}" style="font-size:12px;padding:4px 12px">${ENV_LABELS[cfg.env]||cfg.env}</span>
+          <button class="btn btn-sm" onclick="saveAsTemplate('${cfg.id}')" title="保存为模板">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            保存为模板
+          </button>
           <button class="btn btn-sm" onclick="openEnvConfigForm('${cfg.id}')">编辑</button>
           <button class="btn btn-sm btn-danger" onclick="askDeleteEnvConfig('${cfg.id}')">删除</button>
           <button class="btn btn-sm" onclick="showEnvConfigList('${envConfigProjectId}',${envConfigSubProjectId ? `'${envConfigSubProjectId}'` : 'null'})">返回列表</button>
@@ -2361,6 +2434,23 @@ function openEnvConfigForm(configId) {
   document.getElementById('envconfig-modal-title').textContent = cfg ? '编辑环境配置' : '新建环境配置';
   document.getElementById('ec-name').value = cfg?.name || '';
   document.getElementById('ec-env').value = cfg?.env || 'dev';
+
+  // Template selector (only for new configs)
+  const tplContainer = document.getElementById('ec-template-selector');
+  if (!configId && envConfigTemplates.length > 0) {
+    tplContainer.innerHTML = `<div class="template-selector">
+      <label>使用模板：</label>
+      <select id="ec-template-select" onchange="if(this.value)applyTemplate(this.value)">
+        <option value="">-- 不使用模板 --</option>
+        ${envConfigTemplates.map(t => `<option value="${t.id}">${escHtml(t.name)}</option>`).join('')}
+      </select>
+      <button class="btn btn-sm btn-danger" onclick="const s=document.getElementById('ec-template-select');if(s.value){deleteTemplate(s.value);openEnvConfigForm(null);}" title="删除所选模板">删除模板</button>
+    </div>`;
+    tplContainer.style.display = '';
+  } else {
+    tplContainer.innerHTML = '';
+    tplContainer.style.display = 'none';
+  }
 
   // Render standard fields
   const container = document.getElementById('ec-fields-container');
@@ -2459,6 +2549,61 @@ function askDeleteEnvConfig(configId) {
 
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => showToast('已复制', 'success')).catch(() => showToast('复制失败', 'error'));
+}
+
+// ======== ENV CONFIG TEMPLATES ========
+async function loadEnvConfigTemplates() {
+  if (!ELECTRON_AVAILABLE) return;
+  const settings = await window.electronAPI.getSettings();
+  envConfigTemplates = settings.envConfigTemplates || [];
+}
+
+async function saveEnvConfigTemplates() {
+  if (!ELECTRON_AVAILABLE) return;
+  const settings = await window.electronAPI.getSettings();
+  settings.envConfigTemplates = envConfigTemplates;
+  await window.electronAPI.saveSettings(settings);
+}
+
+async function saveAsTemplate(configId) {
+  const cfg = getEnvConfig(envConfigProjectId, envConfigSubProjectId, configId);
+  if (!cfg) return;
+  const name = prompt('请输入模板名称：', cfg.name);
+  if (!name || !name.trim()) return;
+  envConfigTemplates.push({
+    id: genId(),
+    name: name.trim(),
+    fields: cfg.fields.map(f => ({ key: f.key, value: '' }))
+  });
+  await saveEnvConfigTemplates();
+  showToast(`已保存为模板「${name.trim()}」`, 'success');
+}
+
+async function deleteTemplate(templateId) {
+  envConfigTemplates = envConfigTemplates.filter(t => t.id !== templateId);
+  await saveEnvConfigTemplates();
+  showToast('模板已删除', 'success');
+}
+
+function applyTemplate(templateId) {
+  const tpl = envConfigTemplates.find(t => t.id === templateId);
+  if (!tpl) return;
+  document.getElementById('ec-name').value = tpl.name;
+  const container = document.getElementById('ec-fields-container');
+  container.innerHTML = tpl.fields.map((f, i) => `
+    <div class="form-row form-row-2" data-field-idx="${i}">
+      <div class="form-group">
+        <label class="form-label">${escHtml(f.key)}</label>
+        <input class="form-control ec-field-value" data-key="${escHtml(f.key)}" value="" placeholder="输入${escHtml(f.key)}">
+      </div>
+    </div>`).join('');
+  document.getElementById('ec-custom-fields').innerHTML = '';
+}
+
+// ======== ENV CONFIG FILTER ========
+function setEnvFilter(env) {
+  envConfigFilterEnv = env;
+  renderEnvConfigList();
 }
 
 // ======== DELETE TASK FROM CARD ========
@@ -3388,6 +3533,7 @@ async function init() {
       for (const r of customRoles) ROLE_LABELS[r.key] = r.name;
     } catch {}
   }
+  await loadEnvConfigTemplates();
   await loadFromFS();
   await loadPeopleFromFS();
   renderDashboard();
